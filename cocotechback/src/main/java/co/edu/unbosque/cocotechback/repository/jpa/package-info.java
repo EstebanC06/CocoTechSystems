@@ -21,16 +21,16 @@
  * <p>
  * Repositorios disponibles:
  * <ul>
- * <li>{@link co.edu.unbosque.cocotechback.repository.ClienteRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.EmpleadoRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.SucursalRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.CajaRegistradoraRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.CategoriaRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.ProveedorRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.ProductoRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.VentaRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.DetalleVentaRepository}</li>
- * <li>{@link co.edu.unbosque.cocotechback.repository.FacturaRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.ClienteRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.CajaRegistradoraRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.CategoriaRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.ProductoRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.VentaRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.DetalleVentaRepository}</li>
+ * <li>{@link co.edu.unbosque.cocotechback.repository.jpa.FacturaRepository}</li>
  * </ul>
  */
-package co.edu.unbosque.cocotechback.repository;
+package co.edu.unbosque.cocotechback.repository.jpa;

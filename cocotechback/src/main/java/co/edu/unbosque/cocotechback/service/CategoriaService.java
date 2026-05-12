@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.cocotechback.dto.CategoriaDTO;
 import co.edu.unbosque.cocotechback.model.Categoria;
-import co.edu.unbosque.cocotechback.repository.CategoriaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.CategoriaRepository;
 
 /**
  * Servicio encargado de la lógica de negocio relacionada con la entidad

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.cocotechback.dto.SucursalDTO;
 import co.edu.unbosque.cocotechback.model.Sucursal;
-import co.edu.unbosque.cocotechback.repository.SucursalRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
 
 /**
  * Servicio encargado de la lógica de negocio relacionada con la entidad

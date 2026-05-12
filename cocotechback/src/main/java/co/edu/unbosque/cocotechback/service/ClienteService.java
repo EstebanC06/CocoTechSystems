@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import co.edu.unbosque.cocotechback.dto.ClienteDTO;
 import co.edu.unbosque.cocotechback.model.Cliente;
 import co.edu.unbosque.cocotechback.model.Usuario.Rol;
-import co.edu.unbosque.cocotechback.repository.ClienteRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ClienteRepository;
 import co.edu.unbosque.cocotechback.util.AESUtil;
 
 /**

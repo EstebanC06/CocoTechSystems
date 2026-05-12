@@ -16,9 +16,9 @@ import co.edu.unbosque.cocotechback.dto.CajaRegistradoraDTO;
 import co.edu.unbosque.cocotechback.model.CajaRegistradora;
 import co.edu.unbosque.cocotechback.model.Empleado;
 import co.edu.unbosque.cocotechback.model.Sucursal;
-import co.edu.unbosque.cocotechback.repository.CajaRegistradoraRepository;
-import co.edu.unbosque.cocotechback.repository.EmpleadoRepository;
-import co.edu.unbosque.cocotechback.repository.SucursalRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.CajaRegistradoraRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
 
 /**
  * Servicio encargado de la lógica de negocio relacionada con la entidad

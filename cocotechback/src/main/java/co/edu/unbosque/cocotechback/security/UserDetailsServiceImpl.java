@@ -9,8 +9,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import co.edu.unbosque.cocotechback.repository.ClienteRepository;
-import co.edu.unbosque.cocotechback.repository.EmpleadoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ClienteRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository;
 import co.edu.unbosque.cocotechback.util.AESUtil;
 
 /**

@@ -17,6 +17,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import co.edu.unbosque.cocotechback.model.CajaRegistradora;
 import co.edu.unbosque.cocotechback.model.CajaRegistradora.Estado;
+import co.edu.unbosque.cocotechback.repository.jpa.CajaRegistradoraRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.CategoriaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ClienteRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.DetalleVentaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.FacturaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ProductoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.VentaRepository;
 import co.edu.unbosque.cocotechback.model.Categoria;
 import co.edu.unbosque.cocotechback.model.Cliente;
 import co.edu.unbosque.cocotechback.model.DetalleVenta;
@@ -26,16 +36,6 @@ import co.edu.unbosque.cocotechback.model.Producto;
 import co.edu.unbosque.cocotechback.model.Proveedor;
 import co.edu.unbosque.cocotechback.model.Sucursal;
 import co.edu.unbosque.cocotechback.model.Venta;
-import co.edu.unbosque.cocotechback.repository.CajaRegistradoraRepository;
-import co.edu.unbosque.cocotechback.repository.CategoriaRepository;
-import co.edu.unbosque.cocotechback.repository.ClienteRepository;
-import co.edu.unbosque.cocotechback.repository.DetalleVentaRepository;
-import co.edu.unbosque.cocotechback.repository.EmpleadoRepository;
-import co.edu.unbosque.cocotechback.repository.FacturaRepository;
-import co.edu.unbosque.cocotechback.repository.ProductoRepository;
-import co.edu.unbosque.cocotechback.repository.ProveedorRepository;
-import co.edu.unbosque.cocotechback.repository.SucursalRepository;
-import co.edu.unbosque.cocotechback.repository.VentaRepository;
 import co.edu.unbosque.cocotechback.util.AESUtil;
 
 /**

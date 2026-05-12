@@ -16,9 +16,9 @@ import co.edu.unbosque.cocotechback.dto.ProductoDTO;
 import co.edu.unbosque.cocotechback.model.Categoria;
 import co.edu.unbosque.cocotechback.model.Producto;
 import co.edu.unbosque.cocotechback.model.Proveedor;
-import co.edu.unbosque.cocotechback.repository.CategoriaRepository;
-import co.edu.unbosque.cocotechback.repository.ProductoRepository;
-import co.edu.unbosque.cocotechback.repository.ProveedorRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.CategoriaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ProductoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
 
 /**
  * Servicio encargado de la lógica de negocio relacionada con la entidad

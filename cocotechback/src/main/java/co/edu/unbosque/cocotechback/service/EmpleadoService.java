@@ -17,8 +17,8 @@ import co.edu.unbosque.cocotechback.dto.EmpleadoDTO;
 import co.edu.unbosque.cocotechback.model.Empleado;
 import co.edu.unbosque.cocotechback.model.Sucursal;
 import co.edu.unbosque.cocotechback.model.Usuario.Rol;
-import co.edu.unbosque.cocotechback.repository.EmpleadoRepository;
-import co.edu.unbosque.cocotechback.repository.SucursalRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
 import co.edu.unbosque.cocotechback.util.AESUtil;
 
 /**

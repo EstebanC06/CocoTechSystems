@@ -2,7 +2,7 @@
  * Paquete que contiene las interfaces de Repositorio utilizadas
  * en la aplicación CocoTech backend.
  */
-package co.edu.unbosque.cocotechback.repository;
+package co.edu.unbosque.cocotechback.repository.jpa;
 
 import java.util.List;
 

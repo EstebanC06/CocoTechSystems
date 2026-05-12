@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.cocotechback.dto.ProveedorDTO;
 import co.edu.unbosque.cocotechback.model.Proveedor;
-import co.edu.unbosque.cocotechback.repository.ProveedorRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
 
 /**
  * Servicio encargado de la lógica de negocio relacionada con la entidad
