@@ -55,6 +55,21 @@ public class ProductoDTO {
 	 */
 	private Long idProveedor;
 
+	/** URL de la imagen del producto para el catálogo. */
+	private String imagenUrl;
+
+	/** Descripción extendida del producto. */
+	private String descripcion;
+
+	/** Porcentaje de descuento aplicado (0-100). */
+	private Integer descuentoPorcentaje;
+
+	/** Si el producto debe destacarse en la Home del e-commerce. */
+	private Boolean destacado;
+
+	/** Si el producto está activo en el catálogo (baja lógica). */
+	private Boolean activo;
+
 	/**
 	 * Constructor por defecto de {@code ProductoDTO}.
 	 */
@@ -208,6 +223,56 @@ public class ProductoDTO {
 	 */
 	public void setIdProveedor(Long idProveedor) {
 		this.idProveedor = idProveedor;
+	}
+
+	/** @return URL de la imagen del producto. */
+	public String getImagenUrl() {
+		return imagenUrl;
+	}
+
+	/** @param imagenUrl Nueva URL de la imagen. */
+	public void setImagenUrl(String imagenUrl) {
+		this.imagenUrl = imagenUrl;
+	}
+
+	/** @return Descripción extendida del producto. */
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	/** @param descripcion Nueva descripción. */
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
+	}
+
+	/** @return Porcentaje de descuento del producto. */
+	public Integer getDescuentoPorcentaje() {
+		return descuentoPorcentaje;
+	}
+
+	/** @param descuentoPorcentaje Nuevo porcentaje de descuento. */
+	public void setDescuentoPorcentaje(Integer descuentoPorcentaje) {
+		this.descuentoPorcentaje = descuentoPorcentaje;
+	}
+
+	/** @return {@code true} si el producto está destacado. */
+	public Boolean getDestacado() {
+		return destacado;
+	}
+
+	/** @param destacado Marca o desmarca el producto como destacado. */
+	public void setDestacado(Boolean destacado) {
+		this.destacado = destacado;
+	}
+
+	/** @return {@code true} si el producto está activo. */
+	public Boolean getActivo() {
+		return activo;
+	}
+
+	/** @param activo Activa o desactiva el producto. */
+	public void setActivo(Boolean activo) {
+		this.activo = activo;
 	}
 
 	/**

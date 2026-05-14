@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -95,32 +96,34 @@ public class SecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth -> {
-					// ── Endpoints públicos ────────────────────────────────────
-					// Autenticación (login de clientes y empleados)
+					// ── Endpoints públicos (sin token) ────────────────────────
+					// Autenticación (login)
 					auth.requestMatchers("/auth/**").permitAll();
 					// Swagger / OpenAPI
 					auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
 							"/swagger-ui.html").permitAll();
 					// Registro de clientes (no requiere token)
 					auth.requestMatchers("/cliente/crear").permitAll();
+					// Catálogo público del e-commerce (catálogo sin login)
+					auth.requestMatchers("/publico/**").permitAll();
+					// CORS preflight
+					auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 
-					// ── Endpoints para ROLE_CLIENTE y ROLE_ADMIN ─────────────
-					// Catálogo de productos y categorías (solo lectura)
-					auth.requestMatchers("/producto/mostrarTodos").hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/producto/obtenerPorId/**").hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/categoria/mostrarTodas").hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/categoria/obtenerPorId/**").hasAnyRole("CLIENTE", "ADMIN");
-					// Historial propio (venta y factura)
-					auth.requestMatchers("/venta/obtenerPorId/**").hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/factura/obtenerPorId/**").hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/factura/obtenerPorVenta/**")
-							.hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/detalleVenta/obtenerPorId/**")
-							.hasAnyRole("CLIENTE", "ADMIN");
-					// Gestión del propio perfil de cliente
+					// ── Catálogo accesible para los 3 roles autenticados ──────
+					auth.requestMatchers("/producto/mostrarTodos")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/producto/obtenerPorId/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/categoria/mostrarTodas")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/categoria/obtenerPorId/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+
+					// ── Perfil propio del cliente ─────────────────────────────
 					auth.requestMatchers("/cliente/obtenerPorId/**")
 							.hasAnyRole("CLIENTE", "ADMIN");
-					auth.requestMatchers("/cliente/actualizar").hasAnyRole("CLIENTE", "ADMIN");
+					auth.requestMatchers("/cliente/actualizar")
+							.hasAnyRole("CLIENTE", "ADMIN");
 					auth.requestMatchers("/cliente/actualizarContrasena")
 							.hasAnyRole("CLIENTE", "ADMIN");
 					auth.requestMatchers("/cliente/actualizarCorreo")
@@ -128,9 +131,50 @@ public class SecurityConfig {
 					auth.requestMatchers("/cliente/actualizarCodigo")
 							.hasAnyRole("CLIENTE", "ADMIN");
 
+					// ── Direcciones del cliente ───────────────────────────────
+					// (control fino con @PreAuthorize en el controlador)
+					auth.requestMatchers("/direccion/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+
+					// ── Pedidos del e-commerce ────────────────────────────────
+					// El cliente crea pedidos y consulta los suyos; el empleado
+					// gestiona los de su sucursal; el admin lo ve todo. El
+					// control fino se hace con @PreAuthorize en el controlador.
+					auth.requestMatchers("/pedido/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+
+					// ── Operación de sucursal para empleados ──────────────────
+					// El empleado puede crear ventas (POS), detalles, facturas y
+					// consultar el catálogo. NO puede CRUD de productos/empleados.
+					auth.requestMatchers("/venta/crear", "/venta/mostrarTodos",
+							"/venta/obtenerPorId/**", "/venta/cliente/**",
+							"/venta/empleado/**")
+							.hasAnyRole("EMPLEADO", "ADMIN");
+					auth.requestMatchers("/detalleVenta/crear",
+							"/detalleVenta/mostrarTodos", "/detalleVenta/obtenerPorId/**",
+							"/detalleVenta/venta/**")
+							.hasAnyRole("EMPLEADO", "ADMIN");
+					auth.requestMatchers("/factura/crear", "/factura/mostrarTodas",
+							"/factura/obtenerPorId/**", "/factura/obtenerPorVenta/**")
+							.hasAnyRole("EMPLEADO", "ADMIN");
+					auth.requestMatchers("/empleado/obtenerPorId/**",
+							"/empleado/actualizar")
+							.hasAnyRole("EMPLEADO", "ADMIN");
+
+					// Historial propio (cliente lee SUS ventas y facturas)
+					auth.requestMatchers("/venta/obtenerPorId/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/factura/obtenerPorId/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/factura/obtenerPorVenta/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+					auth.requestMatchers("/detalleVenta/obtenerPorId/**")
+							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
+
 					// ── Todo lo demás requiere ROLE_ADMIN ─────────────────────
 					auth.requestMatchers("/empleado/**").hasRole("ADMIN");
-					auth.requestMatchers("/sucursal/**").hasRole("ADMIN");
+					auth.requestMatchers("/sucursal/**")
+							.hasAnyRole("EMPLEADO", "ADMIN"); // lectura para empleado
 					auth.requestMatchers("/caja/**").hasRole("ADMIN");
 					auth.requestMatchers("/proveedor/**").hasRole("ADMIN");
 					auth.requestMatchers("/producto/**").hasRole("ADMIN");
@@ -162,7 +206,8 @@ public class SecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(Arrays.asList(
-				"http://localhost:4200",  // Angular dev server
+				"http://localhost:5173",  // Vite dev server (frontend e-commerce)
+				"http://localhost:4200",  // Angular dev server (legado)
 				"http://localhost:8080",
 				"http://localhost:8081"));
 		configuration.setAllowedMethods(

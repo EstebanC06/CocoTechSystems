@@ -17,25 +17,33 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import co.edu.unbosque.cocotechback.model.CajaRegistradora;
 import co.edu.unbosque.cocotechback.model.CajaRegistradora.Estado;
+import co.edu.unbosque.cocotechback.model.Categoria;
+import co.edu.unbosque.cocotechback.model.Cliente;
+import co.edu.unbosque.cocotechback.model.DetallePedido;
+import co.edu.unbosque.cocotechback.model.DetalleVenta;
+import co.edu.unbosque.cocotechback.model.Empleado;
+import co.edu.unbosque.cocotechback.model.Factura;
+import co.edu.unbosque.cocotechback.model.Pedido;
+import co.edu.unbosque.cocotechback.model.Pedido.EstadoPedido;
+import co.edu.unbosque.cocotechback.model.Pedido.MetodoPago;
+import co.edu.unbosque.cocotechback.model.Pedido.TipoEntrega;
+import co.edu.unbosque.cocotechback.model.Producto;
+import co.edu.unbosque.cocotechback.model.Proveedor;
+import co.edu.unbosque.cocotechback.model.Sucursal;
+import co.edu.unbosque.cocotechback.model.Usuario;
+import co.edu.unbosque.cocotechback.model.Venta;
 import co.edu.unbosque.cocotechback.repository.jpa.CajaRegistradoraRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.CategoriaRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.ClienteRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.DetallePedidoRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.DetalleVentaRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.EmpleadoRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.FacturaRepository;
+import co.edu.unbosque.cocotechback.repository.jpa.PedidoRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.ProductoRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
 import co.edu.unbosque.cocotechback.repository.jpa.VentaRepository;
-import co.edu.unbosque.cocotechback.model.Categoria;
-import co.edu.unbosque.cocotechback.model.Cliente;
-import co.edu.unbosque.cocotechback.model.DetalleVenta;
-import co.edu.unbosque.cocotechback.model.Empleado;
-import co.edu.unbosque.cocotechback.model.Factura;
-import co.edu.unbosque.cocotechback.model.Producto;
-import co.edu.unbosque.cocotechback.model.Proveedor;
-import co.edu.unbosque.cocotechback.model.Sucursal;
-import co.edu.unbosque.cocotechback.model.Venta;
 import co.edu.unbosque.cocotechback.util.AESUtil;
 
 /**
@@ -107,6 +115,8 @@ public class LoadDatabase {
 			VentaRepository ventaRepo,
 			DetalleVentaRepository detalleVentaRepo,
 			FacturaRepository facturaRepo,
+			PedidoRepository pedidoRepo,
+			DetallePedidoRepository detallePedidoRepo,
 			PasswordEncoder passwordEncoder) {
 
 		return args -> {
@@ -131,23 +141,34 @@ public class LoadDatabase {
 
 			// ── 2. CATEGORÍAS ─────────────────────────────────────────────────
 			if (categoriaRepo.count() == 0) {
+				// nombre, descripción, icono FontAwesome
 				String[][] categoriasData = {
-						{ "Lácteos", "Leche, yogurt, queso, mantequilla y derivados lácteos" },
-						{ "Bebidas", "Jugos, gaseosas, aguas y bebidas energéticas" },
-						{ "Carnes", "Res, pollo, cerdo y productos cárnicos procesados" },
-						{ "Frutas y Verduras", "Productos frescos de temporada y hortalizas" },
-						{ "Panadería", "Pan, galletas, pasteles y productos de repostería" },
-						{ "Aseo del Hogar", "Detergentes, desinfectantes y productos de limpieza" },
-						{ "Aseo Personal", "Shampoo, jabón, crema dental y productos de higiene" },
-						{ "Enlatados", "Conservas, atún, sardinas y productos enlatados" },
-						{ "Granos y Cereales", "Arroz, lentejas, fríjoles, avena y cereales" },
-						{ "Snacks", "Papas, maíz pira, chocolates y dulces" }
+						{ "Lácteos", "Leche, yogurt, queso, mantequilla y derivados lácteos",
+								"faCheese" },
+						{ "Bebidas", "Jugos, gaseosas, aguas y bebidas energéticas",
+								"faBottleWater" },
+						{ "Carnes", "Res, pollo, cerdo y productos cárnicos procesados",
+								"faDrumstickBite" },
+						{ "Frutas y Verduras", "Productos frescos de temporada y hortalizas",
+								"faAppleAlt" },
+						{ "Panadería", "Pan, galletas, pasteles y productos de repostería",
+								"faBreadSlice" },
+						{ "Aseo del Hogar", "Detergentes, desinfectantes y productos de limpieza",
+								"faSprayCanSparkles" },
+						{ "Aseo Personal", "Shampoo, jabón, crema dental y productos de higiene",
+								"faSoap" },
+						{ "Enlatados", "Conservas, atún, sardinas y productos enlatados",
+								"faFishFins" },
+						{ "Granos y Cereales", "Arroz, lentejas, fríjoles, avena y cereales",
+								"faSeedling" },
+						{ "Snacks", "Papas, maíz pira, chocolates y dulces", "faCookieBite" }
 				};
 				for (String[] d : categoriasData) {
 					Categoria c = new Categoria(d[0], d[1]);
+					c.setIcono(d[2]);
 					categoriaRepo.save(c);
 				}
-				log.info("Precargando 10 categorías...");
+				log.info("Precargando 10 categorías con íconos...");
 			} else {
 				log.info("Las categorías ya existen, omitiendo...");
 			}
@@ -197,11 +218,29 @@ public class LoadDatabase {
 								passwordEncoder.encode("Cocotech2026@"),
 								AESUtil.encrypt("0"),
 								cargos[i], salarios[i], suc);
+						// Por defecto el constructor asigna ROLE_EMPLEADO; los
+						// Gerentes de Sucursal son ROLE_ADMIN para que puedan
+						// administrar el sistema.
+						if ("Gerente de Sucursal".equals(cargos[i])) {
+							emp.setRol(Usuario.Rol.ROLE_ADMIN);
+						}
 						empleadoRepo.save(emp);
 						empNum++;
 					}
 				}
-				log.info("Precargando 50 empleados...");
+				// Admin maestro adicional (acceso fijo "admin@cocotech.co")
+				// para garantizar siempre un superusuario disponible.
+				Sucursal sucPrincipal = sucursales.get(0);
+				Empleado adminMaestro = new Empleado(
+						"Admin", "CocoTech",
+						AESUtil.encrypt("admin@cocotech.co"),
+						passwordEncoder.encode("Admin12345!"),
+						AESUtil.encrypt("0"),
+						"Administrador del Sistema", 5000000.0, sucPrincipal);
+				adminMaestro.setRol(
+						Usuario.Rol.ROLE_ADMIN);
+				empleadoRepo.save(adminMaestro);
+				log.info("Precargando 50 empleados + 1 admin maestro (admin@cocotech.co)...");
 			} else {
 				log.info("Los empleados ya existen, omitiendo...");
 			}
@@ -348,9 +387,19 @@ public class LoadDatabase {
 							Double.parseDouble(productosData[i][1]),
 							Integer.parseInt(productosData[i][2]),
 							vencimiento, cat, prov);
+					// Campos e-commerce:
+					// - Activos por defecto.
+					// - El primer producto de cada categoría se destaca.
+					// - Cada 7º producto tiene un 15% de descuento (promoción).
+					p.setActivo(true);
+					p.setDestacado(i % 5 == 0);
+					p.setDescuentoPorcentaje(i % 7 == 0 ? 15 : 0);
+					p.setDescripcion("Producto del catálogo CocoTech. " + productosData[i][0]
+							+ " de excelente calidad, directo del proveedor.");
+					// imagenUrl se deja en null; el admin la carga luego.
 					productoRepo.save(p);
 				}
-				log.info("Precargando 50 productos...");
+				log.info("Precargando 50 productos con campos e-commerce...");
 			} else {
 				log.info("Los productos ya existen, omitiendo...");
 			}
@@ -438,6 +487,90 @@ public class LoadDatabase {
 				log.info("Precargando 50 facturas...");
 			} else {
 				log.info("Las facturas ya existen, omitiendo...");
+			}
+
+			// ── 11. PEDIDOS DEL E-COMMERCE (15 pedidos de ejemplo) ────────────
+			if (pedidoRepo.count() == 0) {
+				java.util.List<Cliente> clientes = clienteRepo.findAll();
+				java.util.List<Sucursal> sucursales = sucursalRepo.findAll();
+				java.util.List<Producto> productos = productoRepo.findAll();
+				double tasaIva = 0.19;
+				// Estados variados para poblar las distintas vistas del front
+				EstadoPedido[] estados = {
+						EstadoPedido.RECIBIDO, EstadoPedido.PREPARANDO,
+						EstadoPedido.EN_CAMINO, EstadoPedido.LISTO_PARA_ENTREGA,
+						EstadoPedido.ENTREGADO, EstadoPedido.RECIBIDO,
+						EstadoPedido.CANCELADO, EstadoPedido.PREPARANDO,
+						EstadoPedido.ENTREGADO, EstadoPedido.RECIBIDO,
+						EstadoPedido.EN_CAMINO, EstadoPedido.PREPARANDO,
+						EstadoPedido.RECIBIDO, EstadoPedido.LISTO_PARA_ENTREGA,
+						EstadoPedido.ENTREGADO
+				};
+				for (int i = 0; i < 15; i++) {
+					Cliente cli = clientes.get(i % clientes.size());
+					Sucursal suc = sucursales.get(i % sucursales.size());
+					boolean domicilio = (i % 2 == 0);
+
+					Pedido pedido = new Pedido();
+					pedido.setCliente(cli);
+					pedido.setSucursalDespacho(suc);
+					pedido.setTipoEntrega(domicilio
+							? TipoEntrega.DOMICILIO
+							: TipoEntrega.RECOGER_EN_SUCURSAL);
+					pedido.setMetodoPago(MetodoPago.values()[i % 3]);
+					pedido.setEstado(estados[i]);
+					pedido.setFechaCreacion(LocalDateTime.now().minusDays(15 - i));
+					pedido.setFechaActualizacion(LocalDateTime.now().minusDays(15 - i));
+					if (domicilio) {
+						pedido.setDireccionEnvio(cli.getCalle());
+						pedido.setBarrioEnvio(cli.getBarrio());
+						pedido.setCiudadEnvio(cli.getCiudad());
+						pedido.setReferenciaEnvio("Apartamento " + (100 + i));
+					}
+					pedido.setNotasCliente(i % 3 == 0
+							? "Por favor llamar antes de entregar." : null);
+
+					// 2 o 3 productos por pedido
+					int numLineas = (i % 2) + 2;
+					double subtotal = 0.0;
+					java.util.List<DetallePedido> detalles = new java.util.ArrayList<>();
+					for (int j = 0; j < numLineas; j++) {
+						Producto prod = productos.get((i + j) % productos.size());
+						int cantidad = (j % 3) + 1;
+						double precioBase = prod.getPrecio() != null
+								? prod.getPrecio() : 0.0;
+						int descuento = prod.getDescuentoPorcentaje() != null
+								? prod.getDescuentoPorcentaje() : 0;
+						double precioUnitario = descuento > 0
+								? precioBase * (1 - descuento / 100.0)
+								: precioBase;
+						double subLinea = precioUnitario * cantidad;
+						subtotal += subLinea;
+
+						DetallePedido det = new DetallePedido();
+						det.setPedido(pedido);
+						det.setProducto(prod);
+						det.setCantidad(cantidad);
+						det.setPrecioUnitario(precioUnitario);
+						det.setSubtotal(subLinea);
+						det.setPromocion(descuento > 0);
+						det.setPorcentajeDescuento(descuento);
+						detalles.add(det);
+					}
+					pedido.setDetalles(detalles);
+
+					double iva = subtotal * tasaIva;
+					double costoEnvio = domicilio ? 8000.0 : 0.0;
+					pedido.setSubtotal(subtotal);
+					pedido.setIva(iva);
+					pedido.setCostoEnvio(costoEnvio);
+					pedido.setTotal(subtotal + iva + costoEnvio);
+
+					pedidoRepo.save(pedido);
+				}
+				log.info("Precargando 15 pedidos del e-commerce con estados variados...");
+			} else {
+				log.info("Los pedidos ya existen, omitiendo...");
 			}
 
 			log.info("=== Inicialización de base de datos CocoTech completada ===");

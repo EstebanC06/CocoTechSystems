@@ -170,4 +170,36 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 	 */
 	public List<Producto> findByCategoria_IdCategoriaAndStockLessThanEqual(Long idCategoria,
 			Integer stock);
+
+	/**
+	 * Retorna los productos marcados como destacados y activos para mostrarse
+	 * en la página principal del e-commerce.
+	 *
+	 * @return Una lista de productos destacados activos.
+	 */
+	public List<Producto> findByDestacadoTrueAndActivoTrue();
+
+	/**
+	 * Retorna los productos activos pertenecientes a una categoría específica.
+	 *
+	 * @param idCategoria El ID de la categoría.
+	 * @return Una lista de productos activos de la categoría.
+	 */
+	public List<Producto> findByCategoria_IdCategoriaAndActivoTrue(Long idCategoria);
+
+	/**
+	 * Busca productos activos cuyo nombre contenga la cadena dada,
+	 * sin distinguir mayúsculas/minúsculas.
+	 *
+	 * @param nombre Cadena a buscar dentro del nombre.
+	 * @return Lista de productos activos coincidentes.
+	 */
+	public List<Producto> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);
+
+	/**
+	 * Retorna todos los productos activos.
+	 *
+	 * @return Lista de productos activos.
+	 */
+	public List<Producto> findByActivoTrue();
 }

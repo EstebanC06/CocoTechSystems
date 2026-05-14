@@ -115,7 +115,7 @@ public class EmpleadoController {
 	 *         {@code 404 Not Found} si no existe.
 	 */
 	@GetMapping("/obtenerPorId/{id}")
-	@PreAuthorize("hasRole('ADMIN')")
+	@PreAuthorize("hasAnyRole('EMPLEADO', 'ADMIN')")
 	@Operation(summary = "Obtener empleado por ID", description = "Retorna los datos de un empleado por su ID")
 	public ResponseEntity<?> obtenerPorId(@PathVariable Long id) {
 		EmpleadoDTO found = empleadoServ.getById(id);

@@ -135,6 +135,12 @@ public class CategoriaService implements CRUDOperation<CategoriaDTO, Categoria> 
 		if (newData.getDescripcion() != null) {
 			temp.setDescripcion(newData.getDescripcion());
 		}
+		if (newData.getImagenUrl() != null) {
+			temp.setImagenUrl(newData.getImagenUrl());
+		}
+		if (newData.getIcono() != null) {
+			temp.setIcono(newData.getIcono());
+		}
 		categoriaRepo.save(temp);
 		return 0;
 	}

@@ -19,9 +19,11 @@ import jakarta.persistence.Table;
  * Entidad JPA que representa a un empleado del supermercado.
  * <p>
  * Hereda los atributos comunes de autenticación y datos personales de
- * {@link Usuario}. El empleado posee el rol {@code ROLE_ADMIN}, que le
- * otorga acceso completo al sistema: gestión de inventario, proveedores,
- * ventas, clientes, reportes y demás operaciones administrativas.
+ * {@link Usuario}. Por defecto, un empleado nuevo recibe el rol
+ * {@code ROLE_EMPLEADO}, que le otorga permisos operativos: gestionar
+ * pedidos online de su sucursal, operar el punto de venta físico y consultar
+ * el inventario en modo lectura. Los empleados con cargo "Gerente de Sucursal"
+ * son elevados a {@code ROLE_ADMIN} desde {@code LoadDatabase}.
  * <p>
  * Según los supuestos del sistema:
  * <ul>
@@ -75,11 +77,15 @@ public class Empleado extends Usuario {
 
 	/**
 	 * Constructor por defecto. Asigna automáticamente el rol
-	 * {@code ROLE_ADMIN} al crear un empleado.
+	 * {@code ROLE_EMPLEADO} al crear un empleado.
+	 * <p>
+	 * Un administrador específico debe ser elevado manualmente a
+	 * {@code ROLE_ADMIN} mediante el endpoint {@code /empleado/cambiarRol}
+	 * o desde el seeder de datos {@link LoadDatabase}.
 	 */
 	public Empleado() {
 		super();
-		this.setRol(Rol.ROLE_ADMIN);
+		this.setRol(Rol.ROLE_EMPLEADO);
 	}
 
 	/**
@@ -97,7 +103,7 @@ public class Empleado extends Usuario {
 	public Empleado(String nombres, String apellidos, String correo, String contrasena,
 			String codigoVerificacion, String cargo, Double salario, Sucursal sucursal) {
 		super(nombres, apellidos, correo, contrasena, codigoVerificacion);
-		this.setRol(Rol.ROLE_ADMIN);
+		this.setRol(Rol.ROLE_EMPLEADO);
 		this.cargo = cargo;
 		this.salario = salario;
 		this.sucursal = sucursal;
