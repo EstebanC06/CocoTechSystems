@@ -45,6 +45,19 @@ public class Categoria {
 	private String descripcion;
 
 	/**
+	 * URL de la imagen representativa de la categoría para mostrar en el
+	 * e-commerce.
+	 */
+	@jakarta.persistence.Column(length = 500)
+	private String imagenUrl;
+
+	/**
+	 * Nombre del ícono FontAwesome a usar como representación visual de la
+	 * categoría cuando no hay imagen disponible (ej. "faAppleAlt", "faBreadSlice").
+	 */
+	private String icono;
+
+	/**
 	 * Lista de productos que pertenecen a esta categoría.
 	 * Una categoría contiene varios productos.
 	 */
@@ -138,6 +151,42 @@ public class Categoria {
 	 */
 	public void setProductos(List<Producto> productos) {
 		this.productos = productos;
+	}
+
+	/**
+	 * Obtiene la URL de la imagen de la categoría.
+	 *
+	 * @return La URL de la imagen, o {@code null} si no se ha cargado.
+	 */
+	public String getImagenUrl() {
+		return imagenUrl;
+	}
+
+	/**
+	 * Establece la URL de la imagen de la categoría.
+	 *
+	 * @param imagenUrl La nueva URL de la imagen.
+	 */
+	public void setImagenUrl(String imagenUrl) {
+		this.imagenUrl = imagenUrl;
+	}
+
+	/**
+	 * Obtiene el nombre del ícono FontAwesome de la categoría.
+	 *
+	 * @return El nombre del ícono.
+	 */
+	public String getIcono() {
+		return icono;
+	}
+
+	/**
+	 * Establece el nombre del ícono FontAwesome de la categoría.
+	 *
+	 * @param icono El nuevo nombre del ícono.
+	 */
+	public void setIcono(String icono) {
+		this.icono = icono;
 	}
 
 	/**

@@ -53,7 +53,8 @@ public class EmpleadoDTO {
 	private String codigoVerificacion;
 
 	/**
-	 * Rol del empleado en el sistema (siempre {@code ROLE_ADMIN}).
+	 * Rol del empleado en el sistema. Por defecto {@code ROLE_EMPLEADO};
+	 * puede ser elevado a {@code ROLE_ADMIN}.
 	 */
 	private Rol rol;
 

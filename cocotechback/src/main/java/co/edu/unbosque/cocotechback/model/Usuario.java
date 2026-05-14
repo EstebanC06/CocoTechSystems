@@ -110,14 +110,20 @@ public abstract class Usuario implements UserDetails {
 	/**
 	 * Enumeración que define los roles disponibles en el sistema.
 	 * <ul>
-	 * <li>{@code ROLE_CLIENTE} - Acceso limitado: consulta de productos,
-	 * historial de compras propias y gestión de su perfil.</li>
-	 * <li>{@code ROLE_ADMIN} - Acceso total: gestión de inventario, empleados,
-	 * proveedores, ventas y reportes.</li>
+	 * <li>{@code ROLE_CLIENTE} - Cliente del e-commerce. Acceso al catálogo,
+	 * carrito, checkout, historial de pedidos propios y gestión de su perfil
+	 * y direcciones.</li>
+	 * <li>{@code ROLE_EMPLEADO} - Empleado operativo de sucursal. Gestiona
+	 * pedidos online de su sucursal (cambia estados), opera el punto de venta
+	 * físico y consulta el inventario en modo lectura. NO puede gestionar
+	 * clientes, empleados, ni hacer CRUD de productos.</li>
+	 * <li>{@code ROLE_ADMIN} - Administrador del sistema. Acceso total a
+	 * gestión de inventario, empleados, clientes, sucursales, pedidos
+	 * globales, ventas y reportes.</li>
 	 * </ul>
 	 */
 	public enum Rol {
-		ROLE_CLIENTE, ROLE_ADMIN
+		ROLE_CLIENTE, ROLE_EMPLEADO, ROLE_ADMIN
 	}
 
 	/**

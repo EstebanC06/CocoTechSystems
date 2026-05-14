@@ -108,7 +108,7 @@ public class EmpleadoService implements CRUDOperation<EmpleadoDTO, Empleado> {
 		entity.setCargo(data.getCargo());
 		entity.setSalario(data.getSalario());
 		entity.setSucursal(sucursalFound.get());
-		entity.setRol(Rol.ROLE_ADMIN);
+		entity.setRol(Rol.ROLE_EMPLEADO);
 		empleadoRepo.save(entity);
 		return 0;
 	}

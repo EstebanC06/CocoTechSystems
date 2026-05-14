@@ -31,6 +31,12 @@ public class CategoriaDTO {
 	 */
 	private String descripcion;
 
+	/** URL de la imagen representativa de la categoría. */
+	private String imagenUrl;
+
+	/** Nombre del ícono FontAwesome para la categoría. */
+	private String icono;
+
 	/**
 	 * Constructor por defecto de {@code CategoriaDTO}.
 	 */
@@ -103,6 +109,26 @@ public class CategoriaDTO {
 	 */
 	public void setDescripcion(String descripcion) {
 		this.descripcion = descripcion;
+	}
+
+	/** @return URL de la imagen de la categoría. */
+	public String getImagenUrl() {
+		return imagenUrl;
+	}
+
+	/** @param imagenUrl Nueva URL de la imagen de la categoría. */
+	public void setImagenUrl(String imagenUrl) {
+		this.imagenUrl = imagenUrl;
+	}
+
+	/** @return Nombre del ícono FontAwesome. */
+	public String getIcono() {
+		return icono;
+	}
+
+	/** @param icono Nuevo nombre del ícono. */
+	public void setIcono(String icono) {
+		this.icono = icono;
 	}
 
 	/**

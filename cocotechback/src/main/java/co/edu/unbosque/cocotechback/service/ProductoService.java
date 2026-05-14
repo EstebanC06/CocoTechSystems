@@ -99,6 +99,13 @@ public class ProductoService implements CRUDOperation<ProductoDTO, Producto> {
 		entity.setFechaVencimiento(data.getFechaVencimiento());
 		entity.setCategoria(categoriaFound.get());
 		entity.setProveedor(proveedorFound.get());
+		// Campos e-commerce (con valores por defecto seguros)
+		entity.setImagenUrl(data.getImagenUrl());
+		entity.setDescripcion(data.getDescripcion());
+		entity.setDescuentoPorcentaje(
+				data.getDescuentoPorcentaje() != null ? data.getDescuentoPorcentaje() : 0);
+		entity.setDestacado(data.getDestacado() != null ? data.getDestacado() : false);
+		entity.setActivo(data.getActivo() != null ? data.getActivo() : true);
 		productoRepo.save(entity);
 		return 0;
 	}
@@ -112,6 +119,29 @@ public class ProductoService implements CRUDOperation<ProductoDTO, Producto> {
 	@Override
 	public List<ProductoDTO> getAll() {
 		List<Producto> entityList = productoRepo.findAll();
+		List<ProductoDTO> dtoList = new ArrayList<>();
+		entityList.forEach(entity -> {
+			ProductoDTO dto = modelMapper.map(entity, ProductoDTO.class);
+			if (entity.getCategoria() != null) {
+				dto.setIdCategoria(entity.getCategoria().getIdCategoria());
+			}
+			if (entity.getProveedor() != null) {
+				dto.setIdProveedor(entity.getProveedor().getIdProveedor());
+			}
+			dtoList.add(dto);
+		});
+		return dtoList;
+	}
+
+	/**
+	 * Obtiene todos los productos activos (visibles en el catálogo público
+	 * del e-commerce). Filtra los marcados como {@code activo = false} (baja
+	 * lógica).
+	 *
+	 * @return Lista de productos activos.
+	 */
+	public List<ProductoDTO> getAllActivos() {
+		List<Producto> entityList = productoRepo.findByActivoTrue();
 		List<ProductoDTO> dtoList = new ArrayList<>();
 		entityList.forEach(entity -> {
 			ProductoDTO dto = modelMapper.map(entity, ProductoDTO.class);
@@ -212,6 +242,22 @@ public class ProductoService implements CRUDOperation<ProductoDTO, Producto> {
 			}
 			temp.setProveedor(proveedorFound.get());
 		}
+		// Campos e-commerce (actualización parcial, solo si vienen definidos)
+		if (newData.getImagenUrl() != null) {
+			temp.setImagenUrl(newData.getImagenUrl());
+		}
+		if (newData.getDescripcion() != null) {
+			temp.setDescripcion(newData.getDescripcion());
+		}
+		if (newData.getDescuentoPorcentaje() != null) {
+			temp.setDescuentoPorcentaje(newData.getDescuentoPorcentaje());
+		}
+		if (newData.getDestacado() != null) {
+			temp.setDestacado(newData.getDestacado());
+		}
+		if (newData.getActivo() != null) {
+			temp.setActivo(newData.getActivo());
+		}
 		productoRepo.save(temp);
 		return 0;
 	}
@@ -239,6 +285,110 @@ public class ProductoService implements CRUDOperation<ProductoDTO, Producto> {
 	 */
 	public List<Object[]> getProductosOrdenadosPorVentas() {
 		return productoRepo.findProductosOrdenadosPorVentas();
+	}
+
+	/**
+	 * Retorna los productos marcados como destacados en el catálogo (para
+	 * mostrar en la Home del e-commerce).
+	 *
+	 * @return Lista de {@link ProductoDTO} con destacado = true y activo = true.
+	 */
+	public List<ProductoDTO> getDestacados() {
+		List<Producto> entities = productoRepo.findByDestacadoTrueAndActivoTrue();
+		List<ProductoDTO> dtoList = new ArrayList<>();
+		entities.forEach(entity -> {
+			ProductoDTO dto = modelMapper.map(entity, ProductoDTO.class);
+			if (entity.getCategoria() != null) {
+				dto.setIdCategoria(entity.getCategoria().getIdCategoria());
+			}
+			if (entity.getProveedor() != null) {
+				dto.setIdProveedor(entity.getProveedor().getIdProveedor());
+			}
+			dtoList.add(dto);
+		});
+		return dtoList;
+	}
+
+	/**
+	 * Retorna los productos activos de una categoría específica.
+	 *
+	 * @param idCategoria El ID de la categoría.
+	 * @return Lista de {@link ProductoDTO} activos en esa categoría.
+	 */
+	public List<ProductoDTO> getProductosActivosPorCategoria(Long idCategoria) {
+		List<Producto> entities = productoRepo
+				.findByCategoria_IdCategoriaAndActivoTrue(idCategoria);
+		List<ProductoDTO> dtoList = new ArrayList<>();
+		entities.forEach(entity -> {
+			ProductoDTO dto = modelMapper.map(entity, ProductoDTO.class);
+			if (entity.getCategoria() != null) {
+				dto.setIdCategoria(entity.getCategoria().getIdCategoria());
+			}
+			if (entity.getProveedor() != null) {
+				dto.setIdProveedor(entity.getProveedor().getIdProveedor());
+			}
+			dtoList.add(dto);
+		});
+		return dtoList;
+	}
+
+	/**
+	 * Busca productos por término de nombre (case-insensitive) y activos.
+	 *
+	 * @param q Texto a buscar dentro del nombre.
+	 * @return Lista de productos coincidentes activos.
+	 */
+	public List<ProductoDTO> buscarPorNombre(String q) {
+		List<Producto> entities = productoRepo
+				.findByNombreContainingIgnoreCaseAndActivoTrue(q);
+		List<ProductoDTO> dtoList = new ArrayList<>();
+		entities.forEach(entity -> {
+			ProductoDTO dto = modelMapper.map(entity, ProductoDTO.class);
+			if (entity.getCategoria() != null) {
+				dto.setIdCategoria(entity.getCategoria().getIdCategoria());
+			}
+			if (entity.getProveedor() != null) {
+				dto.setIdProveedor(entity.getProveedor().getIdProveedor());
+			}
+			dtoList.add(dto);
+		});
+		return dtoList;
+	}
+
+	/**
+	 * Decrementa el stock de un producto en una cantidad. Verifica disponibilidad.
+	 *
+	 * @param idProducto El ID del producto.
+	 * @param cantidad   La cantidad a decrementar.
+	 * @return {@code true} si el decremento fue exitoso,
+	 *         {@code false} si no hay stock suficiente o el producto no existe.
+	 */
+	public boolean decrementarStock(Long idProducto, int cantidad) {
+		Optional<Producto> found = productoRepo.findById(idProducto);
+		if (!found.isPresent()) return false;
+		Producto p = found.get();
+		int stockActual = p.getStock() != null ? p.getStock() : 0;
+		if (stockActual < cantidad) return false;
+		p.setStock(stockActual - cantidad);
+		productoRepo.save(p);
+		return true;
+	}
+
+	/**
+	 * Incrementa el stock de un producto en una cantidad. Se usa al cancelar
+	 * pedidos para restituir el inventario.
+	 *
+	 * @param idProducto El ID del producto.
+	 * @param cantidad   La cantidad a incrementar.
+	 */
+	public void incrementarStock(Long idProducto, int cantidad) {
+		Optional<Producto> found = productoRepo.findById(idProducto);
+		if (found.isPresent()) {
+			Producto p = found.get();
+			int stockActual = p.getStock() != null ? p.getStock() : 0;
+			p.setStock(stockActual + cantidad);
+			productoRepo.save(p);
+		}
 	}
 
 	/** {@inheritDoc} */

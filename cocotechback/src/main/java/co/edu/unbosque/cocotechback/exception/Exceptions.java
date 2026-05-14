@@ -166,7 +166,8 @@ public class Exceptions {
 	/**
 	 * Verifica si un rol dado es válido dentro del sistema CocoTech.
 	 * <p>
-	 * Los roles válidos son: {@code "ROLE_CLIENTE"} y {@code "ROLE_ADMIN"}.
+	 * Los roles válidos son: {@code "ROLE_CLIENTE"}, {@code "ROLE_EMPLEADO"}
+	 * y {@code "ROLE_ADMIN"}.
 	 *
 	 * @param rol La cadena que representa el rol a verificar.
 	 * @return {@code true} si el rol es uno de los roles válidos del sistema;
@@ -176,7 +177,8 @@ public class Exceptions {
 		if (rol == null || rol.trim().isEmpty()) {
 			return false;
 		}
-		return rol.equals("ROLE_CLIENTE") || rol.equals("ROLE_ADMIN");
+		return rol.equals("ROLE_CLIENTE") || rol.equals("ROLE_EMPLEADO")
+				|| rol.equals("ROLE_ADMIN");
 	}
 
 	// ─── Validaciones de valores numéricos del dominio ────────────────────────

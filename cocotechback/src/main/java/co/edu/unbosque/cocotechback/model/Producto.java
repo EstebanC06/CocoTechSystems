@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -59,6 +60,41 @@ public class Producto {
 	private LocalDate fechaVencimiento;
 
 	/**
+	 * URL de la imagen del producto para mostrar en el catálogo del
+	 * e-commerce. Puede ser {@code null} cuando aún no se ha cargado.
+	 */
+	@Column(length = 500)
+	private String imagenUrl;
+
+	/**
+	 * Descripción extendida del producto (ingredientes, presentación,
+	 * recomendaciones, etc.). Mostrada en el detalle del producto del
+	 * e-commerce.
+	 */
+	@Column(length = 2000)
+	private String descripcion;
+
+	/**
+	 * Porcentaje de descuento aplicado al producto en el catálogo público
+	 * (0-100). Si es mayor a 0, el producto aparece como "en oferta".
+	 */
+	@Column(name = "descuento_porcentaje")
+	private Integer descuentoPorcentaje;
+
+	/**
+	 * Indica si el producto debe destacarse en la página principal del
+	 * e-commerce (sección "Productos destacados").
+	 */
+	private Boolean destacado;
+
+	/**
+	 * Indica si el producto está activo y visible en el catálogo. Permite
+	 * dar de baja un producto sin eliminarlo (baja lógica), conservando el
+	 * historial de ventas asociado.
+	 */
+	private Boolean activo;
+
+	/**
 	 * Categoría a la que pertenece este producto.
 	 * Cada producto pertenece a una única categoría.
 	 */
@@ -82,8 +118,15 @@ public class Producto {
 
 	/**
 	 * Constructor por defecto de la entidad Producto.
+	 * <p>
+	 * Inicializa los campos del e-commerce con valores seguros:
+	 * {@code activo = true}, {@code destacado = false},
+	 * {@code descuentoPorcentaje = 0}.
 	 */
 	public Producto() {
+		this.activo = true;
+		this.destacado = false;
+		this.descuentoPorcentaje = 0;
 	}
 
 	/**
@@ -98,6 +141,7 @@ public class Producto {
 	 */
 	public Producto(String nombre, Double precio, Integer stock, LocalDate fechaVencimiento,
 			Categoria categoria, Proveedor proveedor) {
+		this();
 		this.nombre = nombre;
 		this.precio = precio;
 		this.stock = stock;
@@ -248,6 +292,96 @@ public class Producto {
 	 */
 	public void setDetallesVenta(List<DetalleVenta> detallesVenta) {
 		this.detallesVenta = detallesVenta;
+	}
+
+	/**
+	 * Obtiene la URL de la imagen del producto.
+	 *
+	 * @return La URL de la imagen, o {@code null} si no se ha cargado.
+	 */
+	public String getImagenUrl() {
+		return imagenUrl;
+	}
+
+	/**
+	 * Establece la URL de la imagen del producto.
+	 *
+	 * @param imagenUrl La nueva URL de la imagen.
+	 */
+	public void setImagenUrl(String imagenUrl) {
+		this.imagenUrl = imagenUrl;
+	}
+
+	/**
+	 * Obtiene la descripción extendida del producto.
+	 *
+	 * @return La descripción del producto.
+	 */
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	/**
+	 * Establece la descripción extendida del producto.
+	 *
+	 * @param descripcion La nueva descripción.
+	 */
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
+	}
+
+	/**
+	 * Obtiene el porcentaje de descuento aplicado al producto.
+	 *
+	 * @return El porcentaje de descuento (0-100).
+	 */
+	public Integer getDescuentoPorcentaje() {
+		return descuentoPorcentaje;
+	}
+
+	/**
+	 * Establece el porcentaje de descuento del producto.
+	 *
+	 * @param descuentoPorcentaje El nuevo porcentaje (0-100).
+	 */
+	public void setDescuentoPorcentaje(Integer descuentoPorcentaje) {
+		this.descuentoPorcentaje = descuentoPorcentaje;
+	}
+
+	/**
+	 * Indica si el producto está marcado como destacado.
+	 *
+	 * @return {@code true} si está destacado.
+	 */
+	public Boolean getDestacado() {
+		return destacado;
+	}
+
+	/**
+	 * Marca o desmarca el producto como destacado.
+	 *
+	 * @param destacado El nuevo valor.
+	 */
+	public void setDestacado(Boolean destacado) {
+		this.destacado = destacado;
+	}
+
+	/**
+	 * Indica si el producto está activo en el catálogo.
+	 *
+	 * @return {@code true} si está activo.
+	 */
+	public Boolean getActivo() {
+		return activo;
+	}
+
+	/**
+	 * Activa o desactiva el producto en el catálogo (baja lógica).
+	 *
+	 * @param activo El nuevo valor.
+	 */
+	public void setActivo(Boolean activo) {
+		this.activo = activo;
 	}
 
 	/**
