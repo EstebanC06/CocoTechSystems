@@ -32,8 +32,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/reportes")
-@CrossOrigin(origins = { "http://localhost:8080", "http://localhost:8081",
-		"http://localhost:4200" })
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:8080",
+		"http://localhost:8081", "http://localhost:4200" })
 @Tag(name = "Reportes pre-calculados",
 		description = "Dashboards rápidos basados en agregaciones almacenadas en MongoDB")
 @SecurityRequirement(name = "bearerAuth")

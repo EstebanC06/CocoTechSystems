@@ -103,6 +103,16 @@ public class PedidoService {
 	@Autowired
 	private FacturaRepository facturaRepo;
 
+	/**
+	 * Servicio de proyección a MongoDB. Al entregar un pedido y generar su
+	 * factura en MySQL, esta factura se proyecta al documento embebido de
+	 * MongoDB siguiendo el Patrón de Referencia Extendida, de modo que el
+	 * e-commerce alimenta la misma vista de lectura intensiva que el POS
+	 * físico.
+	 */
+	@Autowired
+	private FacturaMongoService facturaMongoServ;
+
 	/** Constructor por defecto de {@code PedidoService}. */
 	public PedidoService() {
 	}
@@ -521,6 +531,15 @@ public class PedidoService {
 		factura.setPrecioImpuestos(pedido.getIva());
 		factura.setVenta(venta);
 		facturaRepo.save(factura);
+
+		// 3.1 Proyectar la factura recién creada a MongoDB (Patrón de
+		// Referencia Extendida). De esta forma, las facturas originadas en
+		// el e-commerce alimentan la misma colección de lectura intensiva
+		// que las del POS físico. Si la proyección falla, FacturaMongoService
+		// lo registra como warning sin propagar la excepción: MySQL sigue
+		// siendo la fuente de verdad y se puede re-sincronizar después con
+		// el endpoint POST /factura/mongo/sincronizar.
+		facturaMongoServ.proyectar(factura);
 
 		// 4. Enlazar la venta generada al pedido
 		pedido.setVentaGenerada(venta);

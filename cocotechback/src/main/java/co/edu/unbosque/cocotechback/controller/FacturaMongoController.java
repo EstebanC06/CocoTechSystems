@@ -38,8 +38,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/factura/mongo")
-@CrossOrigin(origins = { "http://localhost:8080", "http://localhost:8081",
-		"http://localhost:4200" })
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:8080",
+		"http://localhost:8081", "http://localhost:4200" })
 @Tag(name = "Facturas (MongoDB)",
 		description = "Lecturas de alto rendimiento sobre la vista embebida de facturas")
 @SecurityRequirement(name = "bearerAuth")

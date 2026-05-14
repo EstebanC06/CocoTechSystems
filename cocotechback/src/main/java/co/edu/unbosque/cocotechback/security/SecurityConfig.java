@@ -171,6 +171,15 @@ public class SecurityConfig {
 					auth.requestMatchers("/detalleVenta/obtenerPorId/**")
 							.hasAnyRole("CLIENTE", "EMPLEADO", "ADMIN");
 
+					// ── Capa MongoDB (vista de lectura intensiva) ─────────────
+					// Estas reglas deben ir ANTES de la regla genérica
+					// "/factura/**", de lo contrario "/factura/mongo/**" caería
+					// bajo hasRole("ADMIN") y bloquearía a los clientes. El
+					// control fino por método lo hace cada @PreAuthorize.
+					auth.requestMatchers("/factura/mongo/**")
+							.hasAnyRole("CLIENTE", "ADMIN");
+					auth.requestMatchers("/reportes/**").hasRole("ADMIN");
+
 					// ── Todo lo demás requiere ROLE_ADMIN ─────────────────────
 					auth.requestMatchers("/empleado/**").hasRole("ADMIN");
 					auth.requestMatchers("/sucursal/**")

@@ -86,13 +86,15 @@ public interface FacturaDocumentoRepository
 	 *
 	 * @param inicio fecha y hora de inicio.
 	 * @param fin    fecha y hora de fin.
-	 * @return lista de documentos con {@code _id} (nombre de sucursal),
+	 * @return lista de documentos donde {@code _id} es un subdocumento con
+	 *         {@code idSucursal} y {@code nombre}, más los campos
 	 *         {@code ingresoBruto}, {@code impuestos} y
 	 *         {@code cantidadFacturas}.
 	 */
 	@Aggregation(pipeline = {
 			"{ $match: { fecha: { $gte: ?0, $lte: ?1 } } }",
-			"{ $group: { _id: '$sucursal.nombre', " +
+			"{ $group: { _id: { idSucursal: '$sucursal.idSucursal', " +
+					"                   nombre: '$sucursal.nombre' }, " +
 					"            ingresoBruto: { $sum: '$precioTotal' }, " +
 					"            impuestos: { $sum: '$precioImpuestos' }, " +
 					"            cantidadFacturas: { $sum: 1 } } }",
