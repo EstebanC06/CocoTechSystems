@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.cocotechback.model.Cliente;
 import co.edu.unbosque.cocotechback.model.DetalleVenta;
@@ -114,9 +115,9 @@ public class FacturaMongoService {
 
 			return facturaDocRepo.save(doc);
 		} catch (RuntimeException ex) {
-			log.warn("Fallo al proyectar factura {} a MongoDB: {}",
-					factura.getIdFactura(), ex.getMessage());
-			return null;
+		    log.warn("Fallo al proyectar factura {} a MongoDB",
+		            factura.getIdFactura(), ex);
+		    return null;
 		}
 	}
 
@@ -217,6 +218,7 @@ public class FacturaMongoService {
 	 *
 	 * @return cantidad de facturas proyectadas exitosamente.
 	 */
+	@Transactional
 	public int sincronizarDesdeMySQL() {
 		List<Factura> todas = facturaRepo.findAll();
 		int exitosas = 0;
