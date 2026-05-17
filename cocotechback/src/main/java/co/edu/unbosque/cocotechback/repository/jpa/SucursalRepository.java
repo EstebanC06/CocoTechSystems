@@ -10,28 +10,26 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import co.edu.unbosque.cocotechback.model.Sucursal;
+import co.edu.unbosque.cocotechback.model.Sucursal.NombreSucursal;
 
 /**
  * Interfaz de repositorio para la entidad {@link Sucursal}.
  * <p>
  * Extiende {@link JpaRepository} para heredar las operaciones CRUD estándar
- * sobre la tabla {@code sucursal} en la base de datos MySQL. Además, define
- * métodos de consulta personalizados para buscar sucursales por nombre y
- * ciudad.
- * <p>
- * Spring Data JPA genera la implementación de todos estos métodos
- * automáticamente en tiempo de ejecución a partir de la convención de nombres.
+ * sobre la tabla {@code sucursal} en la base de datos MySQL. Define además
+ * métodos personalizados para buscar sucursales por su nombre del enum
+ * {@link NombreSucursal} o por ciudad/barrio.
  */
 public interface SucursalRepository extends JpaRepository<Sucursal, Long> {
 
 	/**
-	 * Busca una sucursal por su nombre exacto.
+	 * Busca una sucursal por su nombre exacto del enum.
 	 *
-	 * @param nombre El nombre de la sucursal a buscar.
+	 * @param nombre El valor del enum {@link NombreSucursal} a buscar.
 	 * @return Un {@link Optional} con la sucursal encontrada, o vacío si no existe
 	 *         ninguna sucursal con ese nombre.
 	 */
-	public Optional<Sucursal> findByNombre(String nombre);
+	public Optional<Sucursal> findByNombre(NombreSucursal nombre);
 
 	/**
 	 * Busca todas las sucursales ubicadas en una ciudad específica.
@@ -54,16 +52,16 @@ public interface SucursalRepository extends JpaRepository<Sucursal, Long> {
 	/**
 	 * Verifica si ya existe una sucursal registrada con el nombre proporcionado.
 	 *
-	 * @param nombre El nombre a verificar.
+	 * @param nombre El valor del enum {@link NombreSucursal} a verificar.
 	 * @return {@code true} si ya existe una sucursal con ese nombre,
 	 *         {@code false} en caso contrario.
 	 */
-	public boolean existsByNombre(String nombre);
+	public boolean existsByNombre(NombreSucursal nombre);
 
 	/**
 	 * Elimina una sucursal de la base de datos por su nombre.
 	 *
-	 * @param nombre El nombre de la sucursal a eliminar.
+	 * @param nombre El valor del enum {@link NombreSucursal} a eliminar.
 	 */
-	public void deleteByNombre(String nombre);
+	public void deleteByNombre(NombreSucursal nombre);
 }

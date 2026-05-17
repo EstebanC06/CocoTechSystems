@@ -7,7 +7,10 @@ package co.edu.unbosque.cocotechback.model;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,6 +29,31 @@ import jakarta.persistence.Table;
 public class Proveedor {
 
 	/**
+	 * Conjunto cerrado de proveedores permitidos. El nombre de cada proveedor
+	 * está restringido a uno de estos valores para garantizar consistencia
+	 * en toda la aplicación.
+	 */
+	public enum NombreProveedor {
+		P_AND_G,
+		ORGANICS_COLOMBIA_SAS,
+		ALQUERIA,
+		COCACOLA_FEMSA,
+		MCCAIN_FOODS,
+		BIMBO_COLOMBIA,
+		NESTLE_COLOMBIA,
+		NOEL_NUTRESA,
+		COLOMBINA_SA,
+		BAVARIA,
+		SAMSUNG_ELECTRONICS,
+		UNILEVER_COLOMBIA,
+		LG_ELECTRONICS,
+		STUDIO_F_CO,
+		ARTURO_CALLE,
+		OFFCORSS,
+		JOHNSON_AND_JOHNSON
+	}
+
+	/**
 	 * Identificador único del proveedor, generado automáticamente por la base
 	 * de datos.
 	 */
@@ -34,9 +62,12 @@ public class Proveedor {
 	private Long idProveedor;
 
 	/**
-	 * Nombre o razón social del proveedor.
+	 * Nombre o razón social del proveedor. Restringido al enum
+	 * {@link NombreProveedor}.
 	 */
-	private String nombre;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, unique = true)
+	private NombreProveedor nombre;
 
 	/**
 	 * Número de teléfono de contacto del proveedor.
@@ -44,9 +75,9 @@ public class Proveedor {
 	private String telefono;
 
 	/**
-	 * Calle de la dirección del proveedor.
+	 * Dirección completa del proveedor (ej. "Cra 50 # 13-45").
 	 */
-	private String calle;
+	private String direccion;
 
 	/**
 	 * Barrio de la dirección del proveedor.
@@ -74,16 +105,16 @@ public class Proveedor {
 	/**
 	 * Constructor con parámetros para inicializar los datos del proveedor.
 	 *
-	 * @param nombre   Nombre del proveedor.
-	 * @param telefono Teléfono del proveedor.
-	 * @param calle    Calle del proveedor.
-	 * @param barrio   Barrio del proveedor.
-	 * @param ciudad   Ciudad del proveedor.
+	 * @param nombre    Nombre del proveedor (enum {@link NombreProveedor}).
+	 * @param telefono  Teléfono del proveedor.
+	 * @param direccion Dirección completa del proveedor.
+	 * @param barrio    Barrio del proveedor.
+	 * @param ciudad    Ciudad del proveedor.
 	 */
-	public Proveedor(String nombre, String telefono, String calle, String barrio, String ciudad) {
+	public Proveedor(NombreProveedor nombre, String telefono, String direccion, String barrio, String ciudad) {
 		this.nombre = nombre;
 		this.telefono = telefono;
-		this.calle = calle;
+		this.direccion = direccion;
 		this.barrio = barrio;
 		this.ciudad = ciudad;
 	}
@@ -109,9 +140,9 @@ public class Proveedor {
 	/**
 	 * Obtiene el nombre del proveedor.
 	 *
-	 * @return El nombre del proveedor.
+	 * @return El nombre del proveedor como valor del enum.
 	 */
-	public String getNombre() {
+	public NombreProveedor getNombre() {
 		return nombre;
 	}
 
@@ -120,7 +151,7 @@ public class Proveedor {
 	 *
 	 * @param nombre El nuevo nombre del proveedor.
 	 */
-	public void setNombre(String nombre) {
+	public void setNombre(NombreProveedor nombre) {
 		this.nombre = nombre;
 	}
 
@@ -143,21 +174,21 @@ public class Proveedor {
 	}
 
 	/**
-	 * Obtiene la calle del proveedor.
+	 * Obtiene la dirección completa del proveedor.
 	 *
-	 * @return La calle del proveedor.
+	 * @return La dirección del proveedor.
 	 */
-	public String getCalle() {
-		return calle;
+	public String getDireccion() {
+		return direccion;
 	}
 
 	/**
-	 * Establece la calle del proveedor.
+	 * Establece la dirección completa del proveedor.
 	 *
-	 * @param calle La nueva calle del proveedor.
+	 * @param direccion La nueva dirección del proveedor.
 	 */
-	public void setCalle(String calle) {
-		this.calle = calle;
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
 	}
 
 	/**
@@ -222,6 +253,6 @@ public class Proveedor {
 	@Override
 	public String toString() {
 		return "Proveedor [idProveedor=" + idProveedor + ", nombre=" + nombre + ", telefono=" + telefono
-				+ ", calle=" + calle + ", barrio=" + barrio + ", ciudad=" + ciudad + "]";
+				+ ", direccion=" + direccion + ", barrio=" + barrio + ", ciudad=" + ciudad + "]";
 	}
 }

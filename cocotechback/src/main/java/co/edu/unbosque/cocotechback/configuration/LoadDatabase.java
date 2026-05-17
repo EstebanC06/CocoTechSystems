@@ -123,21 +123,28 @@ public class LoadDatabase {
 
 			// ── 1. SUCURSALES ─────────────────────────────────────────────────
 			if (sucursalRepo.count() == 0) {
-				String[][] sucursalesData = {
-						{ "CocoTech Norte", "3101234567", "Bogotá", "Suba", "Calle 140 # 91-12" },
-						{ "CocoTech Sur", "3207654321", "Bogotá", "Usme", "Cra 5 # 85-30" },
-						{ "CocoTech Oriente", "3159876543", "Bogotá", "San Cristóbal", "Calle 22 Sur # 14-15" },
-						{ "CocoTech Occidente", "3114561234", "Bogotá", "Fontibón", "Av. Calle 22 # 96-20" },
-						{ "CocoTech Centro", "3006543210", "Bogotá", "La Candelaria", "Cra 7 # 12-80" }
+				// Datos: enum NombreSucursal, teléfono, ciudad, barrio, direccion
+				Object[][] sucursalesData = {
+						{ Sucursal.NombreSucursal.FONTIBON,  "3114561234", "Bogotá", "Fontibón",  "Av. Calle 22 # 96-20" },
+						{ Sucursal.NombreSucursal.USAQUEN,   "3006543210", "Bogotá", "Usaquén",   "Cra 7 # 145-30" },
+						{ Sucursal.NombreSucursal.CHAPINERO, "3159876543", "Bogotá", "Chapinero", "Cra 13 # 63-45" },
+						{ Sucursal.NombreSucursal.SUBA,      "3101234567", "Bogotá", "Suba",      "Calle 140 # 91-12" },
+						{ Sucursal.NombreSucursal.ENGATIVA,  "3207654321", "Bogotá", "Engativá",  "Cra 72 # 74-10" }
 				};
-				for (String[] d : sucursalesData) {
-					Sucursal s = new Sucursal(d[0], d[1], d[2], d[3], d[4]);
+				for (Object[] d : sucursalesData) {
+					Sucursal s = new Sucursal(
+							(Sucursal.NombreSucursal) d[0],
+							(String) d[1],
+							(String) d[2],
+							(String) d[3],
+							(String) d[4]);
 					sucursalRepo.save(s);
 				}
-				log.info("Precargando 5 sucursales...");
+				log.info("Precargando 5 sucursales con nombres del enum...");
 			} else {
 				log.info("Las sucursales ya existen, omitiendo...");
 			}
+
 
 			// ── 2. CATEGORÍAS ─────────────────────────────────────────────────
 			if (categoriaRepo.count() == 0) {
@@ -210,26 +217,40 @@ public class LoadDatabase {
 
 			// ── 3. PROVEEDORES ────────────────────────────────────────────────
 			if (proveedorRepo.count() == 0) {
-				String[][] proveedoresData = {
-						{ "Alimentos del Valle S.A.S", "6014321000", "Bogotá", "Puente Aranda", "Cra 50 # 13-45" },
-						{ "Distribuidora Lácteos Bogotá", "6014567890", "Bogotá", "Engativá", "Cra 72 # 74-10" },
-						{ "Carnes Premium Ltda", "3158765432", "Bogotá", "Fontibón", "Cll 24 # 110-30" },
-						{ "AgriFruver Colombia", "3106543219", "Cundinamarca", "Madrid", "Vereda El Corzo S/N" },
-						{ "Panadería Industrial Norte", "3209874321", "Bogotá", "Suba", "Cll 145 # 92-40" },
-						{ "CleanHome Distribuciones", "6013219876", "Bogotá", "Puente Aranda", "Cra 42 # 17-20" },
-						{ "Higiene y Salud S.A", "3153216547", "Bogotá", "Chapinero", "Cra 13 # 63-45" },
-						{ "Conservas del Atlántico", "5754321567", "Barranquilla", "El Prado", "Cll 72 # 45-12" },
-						{ "Granos del Llano S.A.S", "3007651234", "Villavicencio", "Centro", "Cra 18 # 12-30" },
-						{ "SnackWorld Colombia", "3124567891", "Bogotá", "Usaquén", "Cll 127 # 16-50" }
+				// Datos: enum NombreProveedor, teléfono, direccion, barrio, ciudad
+				Object[][] proveedoresData = {
+						{ Proveedor.NombreProveedor.P_AND_G,              "6011112222", "Cra 7 # 71-21",     "Chapinero",       "Bogotá" },
+						{ Proveedor.NombreProveedor.ORGANICS_COLOMBIA_SAS,"3001234567", "Cll 80 # 11-50",    "Chapinero",       "Bogotá" },
+						{ Proveedor.NombreProveedor.ALQUERIA,             "6013334455", "Cll 100 # 8A-49",   "Usaquén",         "Bogotá" },
+						{ Proveedor.NombreProveedor.COCACOLA_FEMSA,       "6014445566", "Av. El Dorado #92-3","Fontibón",       "Bogotá" },
+						{ Proveedor.NombreProveedor.MCCAIN_FOODS,         "6015556677", "Cll 26 # 92-20",    "Fontibón",        "Bogotá" },
+						{ Proveedor.NombreProveedor.BIMBO_COLOMBIA,       "6016667788", "Cra 50 # 13-45",    "Puente Aranda",   "Bogotá" },
+						{ Proveedor.NombreProveedor.NESTLE_COLOMBIA,      "6017778899", "Cra 11 # 86-32",    "Chicó",           "Bogotá" },
+						{ Proveedor.NombreProveedor.NOEL_NUTRESA,         "6048889900", "Cll 8 Sur # 50-67", "Guayabal",        "Medellín" },
+						{ Proveedor.NombreProveedor.COLOMBINA_SA,         "6029990011", "Km 5 vía Cali-Palmira","La Paila",     "Cali" },
+						{ Proveedor.NombreProveedor.BAVARIA,              "6010101010", "Cra 53A # 127-35",  "Suba",            "Bogotá" },
+						{ Proveedor.NombreProveedor.SAMSUNG_ELECTRONICS,  "6011212121", "Cll 100 # 19-61",   "Chicó Norte",     "Bogotá" },
+						{ Proveedor.NombreProveedor.UNILEVER_COLOMBIA,    "6011313131", "Av. Cll 26 # 96-43","Fontibón",        "Bogotá" },
+						{ Proveedor.NombreProveedor.LG_ELECTRONICS,       "6011414141", "Cra 9 # 115-30",    "Usaquén",         "Bogotá" },
+						{ Proveedor.NombreProveedor.STUDIO_F_CO,          "6011515151", "Cll 82 # 11-37",    "Chicó",           "Bogotá" },
+						{ Proveedor.NombreProveedor.ARTURO_CALLE,         "6011616161", "Cra 50 # 17-67",    "Puente Aranda",   "Bogotá" },
+						{ Proveedor.NombreProveedor.OFFCORSS,             "6041717171", "Cll 76 # 80-126",   "Calasanz",        "Medellín" },
+						{ Proveedor.NombreProveedor.JOHNSON_AND_JOHNSON,  "6011818181", "Av. Cll 26 # 92-32","Fontibón",        "Bogotá" }
 				};
-				for (String[] d : proveedoresData) {
-					Proveedor p = new Proveedor(d[0], d[1], d[4], d[3], d[2]);
+				for (Object[] d : proveedoresData) {
+					Proveedor p = new Proveedor(
+							(Proveedor.NombreProveedor) d[0],
+							(String) d[1],
+							(String) d[2],
+							(String) d[3],
+							(String) d[4]);
 					proveedorRepo.save(p);
 				}
-				log.info("Precargando 10 proveedores...");
+				log.info("Precargando 17 proveedores con nombres del enum...");
 			} else {
 				log.info("Los proveedores ya existen, omitiendo...");
 			}
+
 
 			// ── 4. EMPLEADOS (10 por sucursal = 50 total) ─────────────────────
 			if (empleadoRepo.count() == 0) {

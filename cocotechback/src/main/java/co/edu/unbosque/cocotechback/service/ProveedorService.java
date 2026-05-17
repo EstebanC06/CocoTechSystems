@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.cocotechback.dto.ProveedorDTO;
 import co.edu.unbosque.cocotechback.model.Proveedor;
+import co.edu.unbosque.cocotechback.model.Proveedor.NombreProveedor;
 import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
 
 /**
@@ -23,6 +23,10 @@ import co.edu.unbosque.cocotechback.repository.jpa.ProveedorRepository;
  * Implementa {@link CRUDOperation} para proporcionar las operaciones estándar
  * de creación, lectura, actualización y eliminación de proveedores del
  * supermercado.
+ * <p>
+ * El nombre se persiste como enum ({@link NombreProveedor}) en la entidad, pero
+ * en el DTO viaja como String para simplificar la serialización JSON. La
+ * conversión segura entre ambos formatos se hace en este servicio.
  */
 @Service
 public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> {
@@ -34,38 +38,73 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 	private ProveedorRepository proveedorRepo;
 
 	/**
-	 * Mapper para la conversión entre objetos DTO y entidades JPA.
-	 */
-	@Autowired
-	private ModelMapper modelMapper;
-
-	/**
 	 * Constructor por defecto de {@code ProveedorService}.
 	 */
 	public ProveedorService() {
 	}
 
 	/**
+	 * Convierte de forma segura un String al enum {@link NombreProveedor}.
+	 *
+	 * @param nombre Cadena con el nombre.
+	 * @return El valor del enum, o {@code null} si la cadena no corresponde a
+	 *         ninguno de los valores permitidos.
+	 */
+	private NombreProveedor parseNombre(String nombre) {
+		if (nombre == null || nombre.isEmpty()) {
+			return null;
+		}
+		try {
+			return NombreProveedor.valueOf(nombre);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Convierte una entidad {@link Proveedor} a su DTO equivalente.
+	 *
+	 * @param entity Entidad a convertir.
+	 * @return DTO con los datos de la entidad.
+	 */
+	private ProveedorDTO toDTO(Proveedor entity) {
+		ProveedorDTO dto = new ProveedorDTO();
+		dto.setIdProveedor(entity.getIdProveedor());
+		dto.setNombre(entity.getNombre() != null ? entity.getNombre().name() : null);
+		dto.setTelefono(entity.getTelefono());
+		dto.setDireccion(entity.getDireccion());
+		dto.setBarrio(entity.getBarrio());
+		dto.setCiudad(entity.getCiudad());
+		return dto;
+	}
+
+	/**
 	 * Crea un nuevo proveedor en la base de datos.
 	 * <p>
-	 * Valida que el nombre esté presente y que no exista ya un proveedor con
-	 * ese nombre.
+	 * Valida que el nombre sea un valor válido del enum {@link NombreProveedor}
+	 * y que no exista ya un proveedor con ese nombre.
 	 *
 	 * @param data El {@link ProveedorDTO} con la información del nuevo proveedor.
 	 * @param rol  No utilizado en esta implementación.
 	 * @return {@code 0} si la creación fue exitosa,
 	 *         {@code 1} si ya existe un proveedor con ese nombre,
-	 *         {@code 4} si el nombre está ausente.
+	 *         {@code 4} si el nombre es inválido o no permitido.
 	 */
 	@Override
 	public int create(ProveedorDTO data, String rol) {
-		if (data.getNombre() == null || data.getNombre().isEmpty()) {
+		NombreProveedor nombreEnum = parseNombre(data.getNombre());
+		if (nombreEnum == null) {
 			return 4;
 		}
-		if (proveedorRepo.existsByNombre(data.getNombre())) {
+		if (proveedorRepo.existsByNombre(nombreEnum)) {
 			return 1;
 		}
-		Proveedor entity = modelMapper.map(data, Proveedor.class);
+		Proveedor entity = new Proveedor();
+		entity.setNombre(nombreEnum);
+		entity.setTelefono(data.getTelefono());
+		entity.setDireccion(data.getDireccion());
+		entity.setBarrio(data.getBarrio());
+		entity.setCiudad(data.getCiudad());
 		proveedorRepo.save(entity);
 		return 0;
 	}
@@ -80,7 +119,7 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 	public List<ProveedorDTO> getAll() {
 		List<Proveedor> entityList = proveedorRepo.findAll();
 		List<ProveedorDTO> dtoList = new ArrayList<>();
-		entityList.forEach(entity -> dtoList.add(modelMapper.map(entity, ProveedorDTO.class)));
+		entityList.forEach(entity -> dtoList.add(toDTO(entity)));
 		return dtoList;
 	}
 
@@ -92,7 +131,7 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 	 */
 	public ProveedorDTO getById(Long id) {
 		Optional<Proveedor> found = proveedorRepo.findById(id);
-		return found.isPresent() ? modelMapper.map(found.get(), ProveedorDTO.class) : null;
+		return found.isPresent() ? toDTO(found.get()) : null;
 	}
 
 	/**
@@ -118,7 +157,8 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 	 * @param newData El {@link ProveedorDTO} con los nuevos datos.
 	 * @return {@code 0} si fue exitosa,
 	 *         {@code 1} si el nuevo nombre ya está en uso,
-	 *         {@code 2} si no existe el proveedor.
+	 *         {@code 2} si no existe el proveedor,
+	 *         {@code 4} si el nuevo nombre no es un valor válido del enum.
 	 */
 	@Override
 	public int updateById(Long id, ProveedorDTO newData) {
@@ -127,17 +167,23 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 			return 2;
 		}
 		Proveedor temp = found.get();
-		if (newData.getNombre() != null && !newData.getNombre().equals(temp.getNombre())) {
-			if (proveedorRepo.existsByNombre(newData.getNombre())) {
-				return 1;
+		if (newData.getNombre() != null) {
+			NombreProveedor nuevoNombre = parseNombre(newData.getNombre());
+			if (nuevoNombre == null) {
+				return 4;
 			}
-			temp.setNombre(newData.getNombre());
+			if (!nuevoNombre.equals(temp.getNombre())) {
+				if (proveedorRepo.existsByNombre(nuevoNombre)) {
+					return 1;
+				}
+				temp.setNombre(nuevoNombre);
+			}
 		}
 		if (newData.getTelefono() != null) {
 			temp.setTelefono(newData.getTelefono());
 		}
-		if (newData.getCalle() != null) {
-			temp.setCalle(newData.getCalle());
+		if (newData.getDireccion() != null) {
+			temp.setDireccion(newData.getDireccion());
 		}
 		if (newData.getBarrio() != null) {
 			temp.setBarrio(newData.getBarrio());
@@ -164,7 +210,13 @@ public class ProveedorService implements CRUDOperation<ProveedorDTO, Proveedor> 
 	/** No aplica para Proveedor. */
 	@Override
 	public Proveedor encrypt(ProveedorDTO data) {
-		return modelMapper.map(data, Proveedor.class);
+		Proveedor entity = new Proveedor();
+		entity.setNombre(parseNombre(data.getNombre()));
+		entity.setTelefono(data.getTelefono());
+		entity.setDireccion(data.getDireccion());
+		entity.setBarrio(data.getBarrio());
+		entity.setCiudad(data.getCiudad());
+		return entity;
 	}
 
 	/** No aplica para Proveedor. */

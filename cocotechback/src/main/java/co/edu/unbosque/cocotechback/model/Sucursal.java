@@ -7,7 +7,10 @@ package co.edu.unbosque.cocotechback.model;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +31,19 @@ import jakarta.persistence.Table;
 public class Sucursal {
 
 	/**
+	 * Conjunto cerrado de sucursales permitidas. El nombre de cada sucursal
+	 * está restringido a uno de estos valores para garantizar consistencia
+	 * y permitir filtros confiables en el front-end.
+	 */
+	public enum NombreSucursal {
+		FONTIBON,
+		USAQUEN,
+		CHAPINERO,
+		SUBA,
+		ENGATIVA
+	}
+
+	/**
 	 * Identificador único de la sucursal, generado automáticamente por la base
 	 * de datos.
 	 */
@@ -36,9 +52,11 @@ public class Sucursal {
 	private Long idSucursal;
 
 	/**
-	 * Nombre de la sucursal.
+	 * Nombre de la sucursal. Restringido al enum {@link NombreSucursal}.
 	 */
-	private String nombre;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, unique = true)
+	private NombreSucursal nombre;
 
 	/**
 	 * Número de teléfono de contacto de la sucursal.
@@ -56,9 +74,10 @@ public class Sucursal {
 	private String barrio;
 
 	/**
-	 * Calle donde se encuentra ubicada la sucursal.
+	 * Dirección completa donde se encuentra ubicada la sucursal
+	 * (ej. "Calle 140 # 91-12").
 	 */
-	private String calle;
+	private String direccion;
 
 	/**
 	 * Lista de empleados asignados a esta sucursal.
@@ -82,19 +101,19 @@ public class Sucursal {
 	/**
 	 * Constructor con parámetros para inicializar los datos de la sucursal.
 	 *
-	 * @param nombre           Nombre de la sucursal.
+	 * @param nombre           Nombre de la sucursal (enum {@link NombreSucursal}).
 	 * @param telefonoContacto Teléfono de contacto de la sucursal.
 	 * @param ciudad           Ciudad donde se ubica la sucursal.
 	 * @param barrio           Barrio donde se ubica la sucursal.
-	 * @param calle            Calle donde se ubica la sucursal.
+	 * @param direccion        Dirección completa donde se ubica la sucursal.
 	 */
-	public Sucursal(String nombre, String telefonoContacto, String ciudad, String barrio,
-			String calle) {
+	public Sucursal(NombreSucursal nombre, String telefonoContacto, String ciudad, String barrio,
+			String direccion) {
 		this.nombre = nombre;
 		this.telefonoContacto = telefonoContacto;
 		this.ciudad = ciudad;
 		this.barrio = barrio;
-		this.calle = calle;
+		this.direccion = direccion;
 	}
 
 	/**
@@ -118,9 +137,9 @@ public class Sucursal {
 	/**
 	 * Obtiene el nombre de la sucursal.
 	 *
-	 * @return El nombre de la sucursal.
+	 * @return El nombre de la sucursal como valor del enum.
 	 */
-	public String getNombre() {
+	public NombreSucursal getNombre() {
 		return nombre;
 	}
 
@@ -129,7 +148,7 @@ public class Sucursal {
 	 *
 	 * @param nombre El nuevo nombre de la sucursal.
 	 */
-	public void setNombre(String nombre) {
+	public void setNombre(NombreSucursal nombre) {
 		this.nombre = nombre;
 	}
 
@@ -188,21 +207,21 @@ public class Sucursal {
 	}
 
 	/**
-	 * Obtiene la calle donde se ubica la sucursal.
+	 * Obtiene la dirección completa donde se ubica la sucursal.
 	 *
-	 * @return La calle de la sucursal.
+	 * @return La dirección de la sucursal.
 	 */
-	public String getCalle() {
-		return calle;
+	public String getDireccion() {
+		return direccion;
 	}
 
 	/**
-	 * Establece la calle donde se ubica la sucursal.
+	 * Establece la dirección completa donde se ubica la sucursal.
 	 *
-	 * @param calle La nueva calle de la sucursal.
+	 * @param direccion La nueva dirección de la sucursal.
 	 */
-	public void setCalle(String calle) {
-		this.calle = calle;
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
 	}
 
 	/**
@@ -249,6 +268,6 @@ public class Sucursal {
 	@Override
 	public String toString() {
 		return "Sucursal [idSucursal=" + idSucursal + ", nombre=" + nombre + ", telefonoContacto="
-				+ telefonoContacto + ", ciudad=" + ciudad + ", barrio=" + barrio + ", calle=" + calle + "]";
+				+ telefonoContacto + ", ciudad=" + ciudad + ", barrio=" + barrio + ", direccion=" + direccion + "]";
 	}
 }

@@ -13,6 +13,10 @@ import java.util.Objects;
  * Se utiliza para transferir los datos del proveedor entre las capas de la
  * aplicación y a través de la API REST, evitando exponer directamente la
  * entidad JPA {@link co.edu.unbosque.cocotechback.model.Proveedor}.
+ * <p>
+ * El campo {@code nombre} viaja como String entre front y back, pero internamente
+ * el back lo valida y persiste como enum
+ * {@link co.edu.unbosque.cocotechback.model.Proveedor.NombreProveedor}.
  */
 public class ProveedorDTO {
 
@@ -22,7 +26,8 @@ public class ProveedorDTO {
 	private Long idProveedor;
 
 	/**
-	 * Nombre o razón social del proveedor.
+	 * Nombre o razón social del proveedor. Debe corresponder a un valor del
+	 * enum {@link co.edu.unbosque.cocotechback.model.Proveedor.NombreProveedor}.
 	 */
 	private String nombre;
 
@@ -32,9 +37,9 @@ public class ProveedorDTO {
 	private String telefono;
 
 	/**
-	 * Calle de la dirección del proveedor.
+	 * Dirección completa del proveedor.
 	 */
-	private String calle;
+	private String direccion;
 
 	/**
 	 * Barrio de la dirección del proveedor.
@@ -59,16 +64,16 @@ public class ProveedorDTO {
 	 * @param idProveedor Identificador del proveedor.
 	 * @param nombre      Nombre del proveedor.
 	 * @param telefono    Teléfono del proveedor.
-	 * @param calle       Calle del proveedor.
+	 * @param direccion   Dirección completa del proveedor.
 	 * @param barrio      Barrio del proveedor.
 	 * @param ciudad      Ciudad del proveedor.
 	 */
-	public ProveedorDTO(Long idProveedor, String nombre, String telefono, String calle,
+	public ProveedorDTO(Long idProveedor, String nombre, String telefono, String direccion,
 			String barrio, String ciudad) {
 		this.idProveedor = idProveedor;
 		this.nombre = nombre;
 		this.telefono = telefono;
-		this.calle = calle;
+		this.direccion = direccion;
 		this.barrio = barrio;
 		this.ciudad = ciudad;
 	}
@@ -128,21 +133,21 @@ public class ProveedorDTO {
 	}
 
 	/**
-	 * Obtiene la calle del proveedor.
+	 * Obtiene la dirección completa del proveedor.
 	 *
-	 * @return La calle del proveedor.
+	 * @return La dirección del proveedor.
 	 */
-	public String getCalle() {
-		return calle;
+	public String getDireccion() {
+		return direccion;
 	}
 
 	/**
-	 * Establece la calle del proveedor.
+	 * Establece la dirección completa del proveedor.
 	 *
-	 * @param calle La nueva calle del proveedor.
+	 * @param direccion La nueva dirección del proveedor.
 	 */
-	public void setCalle(String calle) {
-		this.calle = calle;
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
 	}
 
 	/**
@@ -220,7 +225,7 @@ public class ProveedorDTO {
 	@Override
 	public String toString() {
 		return "ProveedorDTO [idProveedor=" + idProveedor + ", nombre=" + nombre
-				+ ", telefono=" + telefono + ", calle=" + calle + ", barrio=" + barrio
+				+ ", telefono=" + telefono + ", direccion=" + direccion + ", barrio=" + barrio
 				+ ", ciudad=" + ciudad + "]";
 	}
 }

@@ -594,7 +594,7 @@ public class PedidoService {
 		}
 		if (entity.getSucursalDespacho() != null) {
 			dto.setIdSucursalDespacho(entity.getSucursalDespacho().getIdSucursal());
-			dto.setNombreSucursal(entity.getSucursalDespacho().getNombre());
+			dto.setNombreSucursal(entity.getSucursalDespacho().getNombre().name());
 		}
 		if (entity.getVentaGenerada() != null) {
 			dto.setIdVentaGenerada(entity.getVentaGenerada().getIdVenta());

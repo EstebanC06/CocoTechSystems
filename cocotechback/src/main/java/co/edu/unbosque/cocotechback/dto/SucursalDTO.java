@@ -13,6 +13,10 @@ import java.util.Objects;
  * Se utiliza para transferir los datos de la sucursal entre las capas de la
  * aplicación y a través de la API REST, evitando exponer directamente la
  * entidad JPA {@link co.edu.unbosque.cocotechback.model.Sucursal}.
+ * <p>
+ * El campo {@code nombre} viaja como String entre front y back, pero internamente
+ * el back lo valida y persiste como enum
+ * {@link co.edu.unbosque.cocotechback.model.Sucursal.NombreSucursal}.
  */
 public class SucursalDTO {
 
@@ -22,7 +26,8 @@ public class SucursalDTO {
 	private Long idSucursal;
 
 	/**
-	 * Nombre de la sucursal.
+	 * Nombre de la sucursal. Debe corresponder a un valor del enum
+	 * {@link co.edu.unbosque.cocotechback.model.Sucursal.NombreSucursal}.
 	 */
 	private String nombre;
 
@@ -42,9 +47,9 @@ public class SucursalDTO {
 	private String barrio;
 
 	/**
-	 * Calle donde se ubica la sucursal.
+	 * Dirección completa donde se ubica la sucursal.
 	 */
-	private String calle;
+	private String direccion;
 
 	/**
 	 * Constructor por defecto de {@code SucursalDTO}.
@@ -60,16 +65,16 @@ public class SucursalDTO {
 	 * @param telefonoContacto Teléfono de contacto de la sucursal.
 	 * @param ciudad           Ciudad de la sucursal.
 	 * @param barrio           Barrio de la sucursal.
-	 * @param calle            Calle de la sucursal.
+	 * @param direccion        Dirección completa de la sucursal.
 	 */
 	public SucursalDTO(Long idSucursal, String nombre, String telefonoContacto, String ciudad,
-			String barrio, String calle) {
+			String barrio, String direccion) {
 		this.idSucursal = idSucursal;
 		this.nombre = nombre;
 		this.telefonoContacto = telefonoContacto;
 		this.ciudad = ciudad;
 		this.barrio = barrio;
-		this.calle = calle;
+		this.direccion = direccion;
 	}
 
 	/**
@@ -163,21 +168,21 @@ public class SucursalDTO {
 	}
 
 	/**
-	 * Obtiene la calle de la sucursal.
+	 * Obtiene la dirección completa de la sucursal.
 	 *
-	 * @return La calle de la sucursal.
+	 * @return La dirección de la sucursal.
 	 */
-	public String getCalle() {
-		return calle;
+	public String getDireccion() {
+		return direccion;
 	}
 
 	/**
-	 * Establece la calle de la sucursal.
+	 * Establece la dirección completa de la sucursal.
 	 *
-	 * @param calle La nueva calle de la sucursal.
+	 * @param direccion La nueva dirección de la sucursal.
 	 */
-	public void setCalle(String calle) {
-		this.calle = calle;
+	public void setDireccion(String direccion) {
+		this.direccion = direccion;
 	}
 
 	/**
@@ -219,6 +224,6 @@ public class SucursalDTO {
 	public String toString() {
 		return "SucursalDTO [idSucursal=" + idSucursal + ", nombre=" + nombre
 				+ ", telefonoContacto=" + telefonoContacto + ", ciudad=" + ciudad
-				+ ", barrio=" + barrio + ", calle=" + calle + "]";
+				+ ", barrio=" + barrio + ", direccion=" + direccion + "]";
 	}
 }

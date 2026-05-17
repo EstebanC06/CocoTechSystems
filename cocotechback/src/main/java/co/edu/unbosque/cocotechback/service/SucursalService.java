@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.edu.unbosque.cocotechback.dto.SucursalDTO;
 import co.edu.unbosque.cocotechback.model.Sucursal;
+import co.edu.unbosque.cocotechback.model.Sucursal.NombreSucursal;
 import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
 
 /**
@@ -24,10 +24,9 @@ import co.edu.unbosque.cocotechback.repository.jpa.SucursalRepository;
  * de creación, lectura, actualización y eliminación de sucursales del
  * supermercado.
  * <p>
- * La sucursal no maneja datos sensibles de usuario, por lo que los métodos
- * {@code encrypt}, {@code decrypt}, {@code updatePassword}, {@code updateCorreo},
- * {@code updateRol} y {@code updateCode} no aplican y retornan {@code -1} o
- * {@code null} según corresponda.
+ * El nombre se persiste como enum ({@link NombreSucursal}) en la entidad, pero
+ * en el DTO viaja como String para simplificar la serialización JSON. La
+ * conversión segura entre ambos formatos se hace en este servicio.
  */
 @Service
 public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
@@ -40,40 +39,75 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 	private SucursalRepository sucursalRepo;
 
 	/**
-	 * Mapper para la conversión entre objetos DTO y entidades JPA.
-	 */
-	@Autowired
-	private ModelMapper modelMapper;
-
-	/**
 	 * Constructor por defecto de {@code SucursalService}.
 	 */
 	public SucursalService() {
 	}
 
 	/**
+	 * Convierte de forma segura un String al enum {@link NombreSucursal}.
+	 *
+	 * @param nombre Cadena con el nombre.
+	 * @return El valor del enum, o {@code null} si la cadena no corresponde a
+	 *         ninguno de los valores permitidos.
+	 */
+	private NombreSucursal parseNombre(String nombre) {
+		if (nombre == null || nombre.isEmpty()) {
+			return null;
+		}
+		try {
+			return NombreSucursal.valueOf(nombre);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Convierte una entidad {@link Sucursal} a su DTO equivalente.
+	 *
+	 * @param entity Entidad a convertir.
+	 * @return DTO con los datos de la entidad.
+	 */
+	private SucursalDTO toDTO(Sucursal entity) {
+		SucursalDTO dto = new SucursalDTO();
+		dto.setIdSucursal(entity.getIdSucursal());
+		dto.setNombre(entity.getNombre() != null ? entity.getNombre().name() : null);
+		dto.setTelefonoContacto(entity.getTelefonoContacto());
+		dto.setCiudad(entity.getCiudad());
+		dto.setBarrio(entity.getBarrio());
+		dto.setDireccion(entity.getDireccion());
+		return dto;
+	}
+
+	/**
 	 * Crea una nueva sucursal en la base de datos a partir de un
 	 * {@link SucursalDTO}.
 	 * <p>
-	 * Valida que los campos obligatorios estén presentes y que no exista ya una
-	 * sucursal con el mismo nombre.
+	 * Valida que el nombre sea un valor válido del enum {@link NombreSucursal},
+	 * que la ciudad esté presente y que no exista ya una sucursal con el mismo
+	 * nombre.
 	 *
 	 * @param data El {@link SucursalDTO} con la información de la nueva sucursal.
 	 * @param rol  No utilizado en esta implementación.
 	 * @return {@code 0} si la creación fue exitosa,
 	 *         {@code 1} si ya existe una sucursal con ese nombre,
-	 *         {@code 4} si algún campo requerido está ausente.
+	 *         {@code 4} si el nombre es inválido o la ciudad está ausente.
 	 */
 	@Override
 	public int create(SucursalDTO data, String rol) {
-		if (data.getNombre() == null || data.getNombre().isEmpty()
-				|| data.getCiudad() == null || data.getCiudad().isEmpty()) {
+		NombreSucursal nombreEnum = parseNombre(data.getNombre());
+		if (nombreEnum == null || data.getCiudad() == null || data.getCiudad().isEmpty()) {
 			return 4;
 		}
-		if (sucursalRepo.existsByNombre(data.getNombre())) {
+		if (sucursalRepo.existsByNombre(nombreEnum)) {
 			return 1;
 		}
-		Sucursal entity = modelMapper.map(data, Sucursal.class);
+		Sucursal entity = new Sucursal();
+		entity.setNombre(nombreEnum);
+		entity.setTelefonoContacto(data.getTelefonoContacto());
+		entity.setCiudad(data.getCiudad());
+		entity.setBarrio(data.getBarrio());
+		entity.setDireccion(data.getDireccion());
 		sucursalRepo.save(entity);
 		return 0;
 	}
@@ -88,7 +122,7 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 	public List<SucursalDTO> getAll() {
 		List<Sucursal> entityList = sucursalRepo.findAll();
 		List<SucursalDTO> dtoList = new ArrayList<>();
-		entityList.forEach(entity -> dtoList.add(modelMapper.map(entity, SucursalDTO.class)));
+		entityList.forEach(entity -> dtoList.add(toDTO(entity)));
 		return dtoList;
 	}
 
@@ -101,7 +135,7 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 	 */
 	public SucursalDTO getById(Long id) {
 		Optional<Sucursal> found = sucursalRepo.findById(id);
-		return found.isPresent() ? modelMapper.map(found.get(), SucursalDTO.class) : null;
+		return found.isPresent() ? toDTO(found.get()) : null;
 	}
 
 	/**
@@ -130,7 +164,8 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 	 * @param newData El {@link SucursalDTO} con los nuevos datos.
 	 * @return {@code 0} si la actualización fue exitosa,
 	 *         {@code 1} si el nuevo nombre ya está en uso,
-	 *         {@code 2} si no existe ninguna sucursal con ese ID.
+	 *         {@code 2} si no existe ninguna sucursal con ese ID,
+	 *         {@code 4} si el nuevo nombre no es un valor válido del enum.
 	 */
 	@Override
 	public int updateById(Long id, SucursalDTO newData) {
@@ -139,11 +174,17 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 			return 2;
 		}
 		Sucursal temp = found.get();
-		if (newData.getNombre() != null && !newData.getNombre().equals(temp.getNombre())) {
-			if (sucursalRepo.existsByNombre(newData.getNombre())) {
-				return 1;
+		if (newData.getNombre() != null) {
+			NombreSucursal nuevoNombre = parseNombre(newData.getNombre());
+			if (nuevoNombre == null) {
+				return 4;
 			}
-			temp.setNombre(newData.getNombre());
+			if (!nuevoNombre.equals(temp.getNombre())) {
+				if (sucursalRepo.existsByNombre(nuevoNombre)) {
+					return 1;
+				}
+				temp.setNombre(nuevoNombre);
+			}
 		}
 		if (newData.getTelefonoContacto() != null) {
 			temp.setTelefonoContacto(newData.getTelefonoContacto());
@@ -154,8 +195,8 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 		if (newData.getBarrio() != null) {
 			temp.setBarrio(newData.getBarrio());
 		}
-		if (newData.getCalle() != null) {
-			temp.setCalle(newData.getCalle());
+		if (newData.getDireccion() != null) {
+			temp.setDireccion(newData.getDireccion());
 		}
 		sucursalRepo.save(temp);
 		return 0;
@@ -182,13 +223,19 @@ public class SucursalService implements CRUDOperation<SucursalDTO, Sucursal> {
 		return sucursalRepo.existsById(id);
 	}
 
-	/** No aplica para Sucursal. Retorna {@code null}. */
+	/** No aplica para Sucursal. */
 	@Override
 	public Sucursal encrypt(SucursalDTO data) {
-		return modelMapper.map(data, Sucursal.class);
+		Sucursal entity = new Sucursal();
+		entity.setNombre(parseNombre(data.getNombre()));
+		entity.setTelefonoContacto(data.getTelefonoContacto());
+		entity.setCiudad(data.getCiudad());
+		entity.setBarrio(data.getBarrio());
+		entity.setDireccion(data.getDireccion());
+		return entity;
 	}
 
-	/** No aplica para Sucursal. Retorna {@code null}. */
+	/** No aplica para Sucursal. */
 	@Override
 	public String decrypt(SucursalDTO data) {
 		return null;

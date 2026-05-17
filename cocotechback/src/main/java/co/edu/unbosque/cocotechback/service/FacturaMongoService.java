@@ -173,7 +173,7 @@ public class FacturaMongoService {
 		}
 		SucursalEmbebida se = new SucursalEmbebida();
 		se.setIdSucursal(empleado.getSucursal().getIdSucursal());
-		se.setNombre(empleado.getSucursal().getNombre());
+		se.setNombre(empleado.getSucursal().getNombre().name());
 		se.setCiudad(empleado.getSucursal().getCiudad());
 		return se;
 	}
