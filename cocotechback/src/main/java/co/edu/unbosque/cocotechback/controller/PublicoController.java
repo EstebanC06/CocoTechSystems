@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.cocotechback.dto.SucursalDTO;
+import co.edu.unbosque.cocotechback.service.SucursalService;
 import co.edu.unbosque.cocotechback.dto.CategoriaDTO;
 import co.edu.unbosque.cocotechback.dto.ProductoDTO;
 import co.edu.unbosque.cocotechback.service.CategoriaService;
@@ -162,4 +164,35 @@ public class PublicoController {
 		}
 		return new ResponseEntity<>(categorias, HttpStatus.OK);
 	}
+	
+	
+	// ─── Sucursales ─────────────────────────────────────────────────────────
+
+		/**
+		 * Servicio de sucursales (inyectado para el endpoint público de
+		 * sucursales del Checkout).
+		 */
+		@Autowired
+		private SucursalService sucursalServ;
+
+		/**
+		 * Retorna todas las sucursales del supermercado.
+		 * <p>
+		 * Acceso público (sin JWT) para que el Checkout del e-commerce pueda
+		 * mostrarle al cliente las sucursales disponibles donde recoger o desde
+		 * donde se despacha el pedido, antes incluso de tener una sesión
+		 * confirmada por el front.
+		 *
+		 * @return 200 OK con la lista, o 204 si está vacía.
+		 */
+		@GetMapping("/sucursal/mostrarTodas")
+		@Operation(summary = "Sucursales públicas",
+				description = "Retorna todas las sucursales para uso en checkout y recogida")
+		public ResponseEntity<List<SucursalDTO>> mostrarSucursales() {
+			List<SucursalDTO> sucursales = sucursalServ.getAll();
+			if (sucursales.isEmpty()) {
+				return new ResponseEntity<>(sucursales, HttpStatus.NO_CONTENT);
+			}
+			return new ResponseEntity<>(sucursales, HttpStatus.OK);
+		}
 }

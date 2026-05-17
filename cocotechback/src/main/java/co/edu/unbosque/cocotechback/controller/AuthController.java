@@ -127,16 +127,20 @@ public class AuthController {
 			// Generamos el token incluyendo el correo en texto plano para el frontend
 			String jwt = jwtUtil.generateToken(userDetails, loginRequest.getCorreo());
 
-			// Determinamos el rol para la respuesta
-			String rol = null;
-			if (userDetails instanceof Empleado) {
-				rol = ((Empleado) userDetails).getRol().name();
-			} else if (userDetails instanceof Cliente) {
-				rol = ((Cliente) userDetails).getRol().name();
-			}
+			// Determinamos rol e ID según el tipo de usuario autenticado
+						String rol = null;
+						Long id = null;
+						if (userDetails instanceof Empleado) {
+							Empleado emp = (Empleado) userDetails;
+							rol = emp.getRol().name();
+							id = emp.getId();
+						} else if (userDetails instanceof Cliente) {
+							Cliente cli = (Cliente) userDetails;
+							rol = cli.getRol().name();
+							id = cli.getId();
+						}
 
-			return ResponseEntity.ok(new AuthResponse(jwt, rol));
-
+						return ResponseEntity.ok(new AuthResponse(jwt, loginRequest.getCorreo(), rol, id));
 		} catch (AuthenticationException e) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body(Map.of("message", "Correo o contraseña inválidos", "success", false));
@@ -269,26 +273,42 @@ public class AuthController {
 	/**
 	 * Clase que representa la respuesta del endpoint de login.
 	 * <p>
-	 * Contiene el token JWT generado y el rol del usuario autenticado
-	 * ({@code ROLE_CLIENTE} o {@code ROLE_ADMIN}).
+	 * Contiene el token JWT generado, el rol del usuario autenticado
+	 * ({@code ROLE_CLIENTE}, {@code ROLE_EMPLEADO} o {@code ROLE_ADMIN}),
+	 * y los datos básicos del usuario que el frontend necesita para
+	 * cargar su perfil sin un round-trip adicional.
 	 */
 	public static class AuthResponse {
 
 		/** Token JWT generado para la sesión del usuario. */
 		private final String token;
 
+		/** Tipo de token (siempre "Bearer"). */
+		private final String tipo;
+
+		/** Correo del usuario autenticado (texto plano). */
+		private final String correo;
+
 		/** Rol del usuario autenticado. */
 		private final String rol;
 
+		/** ID del usuario autenticado (cliente o empleado). */
+		private final Long id;
+
 		/**
-		 * Constructor de la respuesta de autenticación.
+		 * Constructor completo de la respuesta de autenticación.
 		 *
-		 * @param token El token JWT generado.
-		 * @param rol   El rol del usuario autenticado.
+		 * @param token  El token JWT generado.
+		 * @param correo El correo del usuario en texto plano.
+		 * @param rol    El rol del usuario autenticado.
+		 * @param id     El ID del usuario autenticado.
 		 */
-		public AuthResponse(String token, String rol) {
+		public AuthResponse(String token, String correo, String rol, Long id) {
 			this.token = token;
+			this.tipo = "Bearer";
+			this.correo = correo;
 			this.rol = rol;
+			this.id = id;
 		}
 
 		/**
@@ -301,12 +321,39 @@ public class AuthController {
 		}
 
 		/**
+		 * Obtiene el tipo de token.
+		 *
+		 * @return Siempre "Bearer".
+		 */
+		public String getTipo() {
+			return tipo;
+		}
+
+		/**
+		 * Obtiene el correo del usuario autenticado.
+		 *
+		 * @return El correo en texto plano.
+		 */
+		public String getCorreo() {
+			return correo;
+		}
+
+		/**
 		 * Obtiene el rol del usuario autenticado.
 		 *
 		 * @return El rol del usuario.
 		 */
 		public String getRol() {
 			return rol;
+		}
+
+		/**
+		 * Obtiene el ID del usuario autenticado.
+		 *
+		 * @return El ID (idCliente o idEmpleado).
+		 */
+		public Long getId() {
+			return id;
 		}
 	}
 }

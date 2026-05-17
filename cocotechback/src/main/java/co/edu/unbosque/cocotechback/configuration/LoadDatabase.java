@@ -369,93 +369,111 @@ public class LoadDatabase {
 				java.util.List<Categoria> categorias = categoriaRepo.findAll();
 				java.util.List<Proveedor> proveedores = proveedorRepo.findAll();
 
-				String[][] productosData = {
-						// Lácteos
-						{ "Leche Entera 1L", "2800", "150" },
-						{ "Yogurt Natural 200g", "1500", "120" },
-						{ "Queso Campesino 250g", "4200", "80" },
-						{ "Mantequilla 125g", "3500", "90" },
-						{ "Crema de Leche 200ml", "2200", "100" },
-						// Bebidas
-						{ "Agua Mineral 600ml", "1200", "200" },
-						{ "Jugo de Naranja 1L", "3800", "100" },
-						{ "Gaseosa Cola 2L", "4500", "150" },
-						{ "Bebida Energética 250ml", "3200", "80" },
-						{ "Té Frío 500ml", "2500", "110" },
-						// Carnes
-						{ "Pechuga de Pollo 1Kg", "12000", "60" },
-						{ "Carne Molida 500g", "9500", "70" },
-						{ "Chuleta de Cerdo 1Kg", "14000", "50" },
-						{ "Salchicha x6 unid", "5800", "90" },
-						{ "Chorizo Santarrosano 500g", "8500", "65" },
-						// Frutas y Verduras
-						{ "Manzana Roja x3 unid", "3200", "100" },
-						{ "Banano x5 unid", "2500", "120" },
-						{ "Tomate x500g", "2800", "90" },
-						{ "Papa Pastusa x1Kg", "3500", "110" },
-						{ "Cebolla Cabezona x500g", "2000", "130" },
-						// Panadería
-						{ "Pan Tajado Grande", "4800", "80" },
-						{ "Galletas Soda x22 unid", "3200", "100" },
-						{ "Croissant x4 unid", "5500", "60" },
-						{ "Ponqué Marmoleado", "8900", "40" },
-						{ "Almojábana x6 unid", "4200", "70" },
-						// Aseo del Hogar
-						{ "Detergente Líquido 1L", "7500", "80" },
-						{ "Jabón en Polvo 1Kg", "6200", "90" },
-						{ "Desinfectante 900ml", "5800", "85" },
-						{ "Limpiavidrios 500ml", "4500", "75" },
-						{ "Suavizante de Ropa 1L", "8200", "70" },
-						// Aseo Personal
-						{ "Shampoo 400ml", "12500", "70" },
-						{ "Jabón de Baño x3 unid", "6800", "90" },
-						{ "Crema Dental 75ml", "5500", "100" },
-						{ "Desodorante Roll-On", "9800", "80" },
-						{ "Papel Higiénico x4 rollos", "7200", "110" },
-						// Enlatados
-						{ "Atún en Agua 150g", "4200", "120" },
-						{ "Sardinas en Tomate 125g", "3500", "100" },
-						{ "Maíz Dulce Enlatado 285g", "4800", "90" },
-						{ "Frijoles Enlatados 400g", "5200", "85" },
-						{ "Tomate Enlatado 400g", "4500", "95" },
-						// Granos y Cereales
-						{ "Arroz Diana x500g", "3200", "150" },
-						{ "Lentejas x500g", "4500", "100" },
-						{ "Fríjoles Rojos x500g", "5800", "90" },
-						{ "Avena en Hojuelas 500g", "5200", "85" },
-						{ "Cereal Integral 500g", "9800", "70" },
-						// Snacks
-						{ "Papas Fritas 90g", "3200", "150" },
-						{ "Maíz Pira Microondas x3 unid", "8500", "80" },
-						{ "Chocolate Barra 100g", "4800", "120" },
-						{ "Gomitas Surtidas 200g", "3500", "100" },
-						{ "Galletas de Chocolate 170g", "4200", "90" }
+				// nombre, precio, stock, imagenUrl
+		
+				Object[][] productosData = {
+						// Lácteos (DERIVADOS_DE_ANIMALES)
+						{ "Leche Entera 1L", "2800", "150", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "milk,carton" },
+						{ "Yogurt Natural 200g", "1500", "120", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "yogurt,cup" },
+						{ "Queso Campesino 250g", "4200", "80", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "cheese,white" },
+						{ "Mantequilla 125g", "3500", "90", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "butter,stick" },
+						{ "Crema de Leche 200ml", "2200", "100", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "cream,bottle" },
+						// Bebidas (BEBIDAS_NO_ALCOHOLICAS)
+						{ "Agua Mineral 600ml", "1200", "200", Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS, "water,bottle" },
+						{ "Jugo de Naranja 1L", "3800", "100", Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS, "orange,juice" },
+						{ "Gaseosa Cola 2L", "4500", "150", Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS, "cola,soda" },
+						{ "Bebida Energética 250ml", "3200", "80", Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS, "energy,drink" },
+						{ "Té Frío 500ml", "2500", "110", Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS, "iced,tea" },
+						// Carnes (DERIVADOS_DE_ANIMALES)
+						{ "Pechuga de Pollo 1Kg", "12000", "60", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "chicken,breast" },
+						{ "Carne Molida 500g", "9500", "70", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "ground,beef" },
+						{ "Chuleta de Cerdo 1Kg", "14000", "50", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "pork,chop" },
+						{ "Salchicha x6 unid", "5800", "90", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "sausage,hotdog" },
+						{ "Chorizo Santarrosano 500g", "8500", "65", Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES, "chorizo,sausage" },
+						// Frutas y Verduras (FRUTAS_VERDURAS)
+						{ "Manzana Roja x3 unid", "3200", "100", Categoria.NombreCategoria.FRUTAS_VERDURAS, "red,apple" },
+						{ "Banano x5 unid", "2500", "120", Categoria.NombreCategoria.FRUTAS_VERDURAS, "banana,yellow" },
+						{ "Tomate x500g", "2800", "90", Categoria.NombreCategoria.FRUTAS_VERDURAS, "tomato,red" },
+						{ "Papa Pastusa x1Kg", "3500", "110", Categoria.NombreCategoria.FRUTAS_VERDURAS, "potato,brown" },
+						{ "Cebolla Cabezona x500g", "2000", "130", Categoria.NombreCategoria.FRUTAS_VERDURAS, "onion,white" },
+						// Panadería (PANADERIA_REPOSTERIA / PAQUETES_GALLETAS)
+						{ "Pan Tajado Grande", "4800", "80", Categoria.NombreCategoria.PANADERIA_REPOSTERIA, "sliced,bread" },
+						{ "Galletas Soda x22 unid", "3200", "100", Categoria.NombreCategoria.PAQUETES_GALLETAS, "saltine,crackers" },
+						{ "Croissant x4 unid", "5500", "60", Categoria.NombreCategoria.PANADERIA_REPOSTERIA, "croissant" },
+						{ "Ponqué Marmoleado", "8900", "40", Categoria.NombreCategoria.PANADERIA_REPOSTERIA, "marble,cake" },
+						{ "Almojábana x6 unid", "4200", "70", Categoria.NombreCategoria.PANADERIA_REPOSTERIA, "cheese,bread" },
+						// Aseo del Hogar (ASEO)
+						{ "Detergente Líquido 1L", "7500", "80", Categoria.NombreCategoria.ASEO, "detergent,bottle" },
+						{ "Jabón en Polvo 1Kg", "6200", "90", Categoria.NombreCategoria.ASEO, "laundry,powder" },
+						{ "Desinfectante 900ml", "5800", "85", Categoria.NombreCategoria.ASEO, "disinfectant,bottle" },
+						{ "Limpiavidrios 500ml", "4500", "75", Categoria.NombreCategoria.ASEO, "glass,cleaner" },
+						{ "Suavizante de Ropa 1L", "8200", "70", Categoria.NombreCategoria.ASEO, "fabric,softener" },
+						// Aseo Personal (CUIDADO_PERSONAL)
+						{ "Shampoo 400ml", "12500", "70", Categoria.NombreCategoria.CUIDADO_PERSONAL, "shampoo,bottle" },
+						{ "Jabón de Baño x3 unid", "6800", "90", Categoria.NombreCategoria.CUIDADO_PERSONAL, "bath,soap" },
+						{ "Crema Dental 75ml", "5500", "100", Categoria.NombreCategoria.CUIDADO_PERSONAL, "toothpaste,tube" },
+						{ "Desodorante Roll-On", "9800", "80", Categoria.NombreCategoria.CUIDADO_PERSONAL, "deodorant,rollon" },
+						{ "Papel Higiénico x4 rollos", "7200", "110", Categoria.NombreCategoria.CUIDADO_PERSONAL, "toilet,paper" },
+						// Enlatados (DESPENSA)
+						{ "Atún en Agua 150g", "4200", "120", Categoria.NombreCategoria.DESPENSA, "tuna,can" },
+						{ "Sardinas en Tomate 125g", "3500", "100", Categoria.NombreCategoria.DESPENSA, "sardines,can" },
+						{ "Maíz Dulce Enlatado 285g", "4800", "90", Categoria.NombreCategoria.DESPENSA, "corn,can" },
+						{ "Frijoles Enlatados 400g", "5200", "85", Categoria.NombreCategoria.DESPENSA, "beans,can" },
+						{ "Tomate Enlatado 400g", "4500", "95", Categoria.NombreCategoria.DESPENSA, "tomato,can" },
+						// Granos y Cereales (DESPENSA)
+						{ "Arroz Diana x500g", "3200", "150", Categoria.NombreCategoria.DESPENSA, "rice,white" },
+						{ "Lentejas x500g", "4500", "100", Categoria.NombreCategoria.DESPENSA, "lentils,brown" },
+						{ "Fríjoles Rojos x500g", "5800", "90", Categoria.NombreCategoria.DESPENSA, "kidney,beans" },
+						{ "Avena en Hojuelas 500g", "5200", "85", Categoria.NombreCategoria.DESPENSA, "oats,bowl" },
+						{ "Cereal Integral 500g", "9800", "70", Categoria.NombreCategoria.DESPENSA, "cereal,bowl" },
+						// Snacks (PAQUETES_GALLETAS / DULCES)
+						{ "Papas Fritas 90g", "3200", "150", Categoria.NombreCategoria.PAQUETES_GALLETAS, "potato,chips" },
+						{ "Maíz Pira Microondas x3 unid", "8500", "80", Categoria.NombreCategoria.PAQUETES_GALLETAS, "popcorn" },
+						{ "Chocolate Barra 100g", "4800", "120", Categoria.NombreCategoria.DULCES, "chocolate,bar" },
+						{ "Gomitas Surtidas 200g", "3500", "100", Categoria.NombreCategoria.DULCES, "gummy,candy" },
+						{ "Galletas de Chocolate 170g", "4200", "90", Categoria.NombreCategoria.DULCES, "chocolate,cookies" }
 				};
-
-				for (int i = 0; i < 50; i++) {
-					Categoria cat = categorias.get(i % categorias.size());
-					Proveedor prov = proveedores.get(i % proveedores.size());
-					LocalDate vencimiento = (i < 30) // Alimentos perecederos tienen vencimiento
-							? LocalDate.now().plusMonths(3 + (i % 6))
-							: null;
-					Producto p = new Producto(
-							productosData[i][0],
-							Double.parseDouble(productosData[i][1]),
-							Integer.parseInt(productosData[i][2]),
-							vencimiento, cat, prov);
-					// Campos e-commerce:
-					// - Activos por defecto.
-					// - El primer producto de cada categoría se destaca.
-					// - Cada 7º producto tiene un 15% de descuento (promoción).
-					p.setActivo(true);
-					p.setDestacado(i % 5 == 0);
-					p.setDescuentoPorcentaje(i % 7 == 0 ? 15 : 0);
-					p.setDescripcion("Producto del catálogo CocoTech. " + productosData[i][0]
-							+ " de excelente calidad, directo del proveedor.");
-					// imagenUrl se deja en null; el admin la carga luego.
-					productoRepo.save(p);
+				
+				// Indexar categorías por su enum para lookup O(1)
+				java.util.Map<Categoria.NombreCategoria, Categoria> catPorNombre = new java.util.HashMap<>();
+				for (Categoria c : categorias) {
+				    catPorNombre.put(c.getNombre(), c);
 				}
-				log.info("Precargando 50 productos con campos e-commerce...");
+				
+				for (int i = 0; i < productosData.length; i++) {
+				    Categoria.NombreCategoria nombreCat = (Categoria.NombreCategoria) productosData[i][3];
+				    Categoria cat = catPorNombre.get(nombreCat);
+				    if (cat == null) {
+				        log.warn("Categoría {} no encontrada, omitiendo producto '{}'", nombreCat, productosData[i][0]);
+				        continue;
+				    }
+				    Proveedor prov = proveedores.get(i % proveedores.size());
+				    boolean perecedero = nombreCat == Categoria.NombreCategoria.FRUTAS_VERDURAS
+				            || nombreCat == Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES
+				            || nombreCat == Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS
+				            || nombreCat == Categoria.NombreCategoria.CONGELADOS
+				            || nombreCat == Categoria.NombreCategoria.PANADERIA_REPOSTERIA
+				            || nombreCat == Categoria.NombreCategoria.DESPENSA
+				            || nombreCat == Categoria.NombreCategoria.PAQUETES_GALLETAS
+				            || nombreCat == Categoria.NombreCategoria.DULCES;
+				    LocalDate vencimiento = perecedero
+				            ? LocalDate.now().plusMonths(3 + (i % 6))
+				            : null;
+				    Producto p = new Producto(
+				            (String) productosData[i][0],
+				            Double.parseDouble((String) productosData[i][1]),
+				            Integer.parseInt((String) productosData[i][2]),
+				            vencimiento, cat, prov);
+				    p.setActivo(true);
+				    p.setDestacado(i % 5 == 0);
+				    p.setDescuentoPorcentaje(i % 7 == 0 ? 15 : 0);
+				    p.setDescripcion("Producto del catálogo CocoTech. " + productosData[i][0]
+				            + " de excelente calidad, directo del proveedor.");
+				    String keywords = (String) productosData[i][4];
+				    p.setImagenUrl("https://loremflickr.com/400/400/" + keywords + "?lock=" + (i + 1));
+				    productoRepo.save(p);
+				}
+				log.info("Precargando " + productosData.length + " productos con categorías e imágenes...");
 			} else {
 				log.info("Los productos ya existen, omitiendo...");
 			}
