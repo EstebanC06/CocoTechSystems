@@ -141,37 +141,72 @@ public class LoadDatabase {
 
 			// ── 2. CATEGORÍAS ─────────────────────────────────────────────────
 			if (categoriaRepo.count() == 0) {
-				// nombre, descripción, icono FontAwesome
-				String[][] categoriasData = {
-						{ "Lácteos", "Leche, yogurt, queso, mantequilla y derivados lácteos",
-								"faCheese" },
-						{ "Bebidas", "Jugos, gaseosas, aguas y bebidas energéticas",
-								"faBottleWater" },
-						{ "Carnes", "Res, pollo, cerdo y productos cárnicos procesados",
-								"faDrumstickBite" },
-						{ "Frutas y Verduras", "Productos frescos de temporada y hortalizas",
-								"faAppleAlt" },
-						{ "Panadería", "Pan, galletas, pasteles y productos de repostería",
-								"faBreadSlice" },
-						{ "Aseo del Hogar", "Detergentes, desinfectantes y productos de limpieza",
+				// Datos: enum NombreCategoria, descripción, icono FontAwesome
+				Object[][] categoriasData = {
+						{ Categoria.NombreCategoria.ASEO,
+								"Detergentes, desinfectantes y productos de limpieza del hogar",
 								"faSprayCanSparkles" },
-						{ "Aseo Personal", "Shampoo, jabón, crema dental y productos de higiene",
-								"faSoap" },
-						{ "Enlatados", "Conservas, atún, sardinas y productos enlatados",
-								"faFishFins" },
-						{ "Granos y Cereales", "Arroz, lentejas, fríjoles, avena y cereales",
-								"faSeedling" },
-						{ "Snacks", "Papas, maíz pira, chocolates y dulces", "faCookieBite" }
+						{ Categoria.NombreCategoria.FRUTAS_VERDURAS,
+								"Productos frescos de temporada, frutas y hortalizas",
+								"faAppleAlt" },
+						{ Categoria.NombreCategoria.DERIVADOS_DE_ANIMALES,
+								"Lácteos, carnes, embutidos y huevos",
+								"faDrumstickBite" },
+						{ Categoria.NombreCategoria.BEBIDAS_NO_ALCOHOLICAS,
+								"Jugos, gaseosas, aguas y bebidas energéticas",
+								"faBottleWater" },
+						{ Categoria.NombreCategoria.CONGELADOS,
+								"Productos congelados listos para preparar",
+								"faSnowflake" },
+						{ Categoria.NombreCategoria.PANADERIA_REPOSTERIA,
+								"Pan, galletas artesanales, pasteles y repostería",
+								"faBreadSlice" },
+						{ Categoria.NombreCategoria.DESPENSA,
+								"Arroz, granos, pastas, enlatados y aceites",
+								"faJar" },
+						{ Categoria.NombreCategoria.PAQUETES_GALLETAS,
+								"Galletas dulces, saladas y paquetes surtidos",
+								"faCookie" },
+						{ Categoria.NombreCategoria.DULCES,
+								"Chocolates, caramelos y golosinas",
+								"faCandyCane" },
+						{ Categoria.NombreCategoria.BEBIDAS_ALCOHOLICAS,
+								"Cervezas, vinos y licores",
+								"faWineBottle" },
+						{ Categoria.NombreCategoria.TECNOLOGIA,
+								"Accesorios electrónicos y dispositivos",
+								"faLaptop" },
+						{ Categoria.NombreCategoria.CUIDADO_PERSONAL,
+								"Shampoo, jabón, crema dental y productos de higiene",
+								"faPumpSoap" },
+						{ Categoria.NombreCategoria.ELECTRODOMESTICOS,
+								"Pequeños electrodomésticos para el hogar",
+								"faPlugCircleBolt" },
+						{ Categoria.NombreCategoria.ROPA_MUJER,
+								"Prendas de vestir para mujer",
+								"faPersonDress" },
+						{ Categoria.NombreCategoria.ROPA_HOMBRE,
+								"Prendas de vestir para hombre",
+								"faShirt" },
+						{ Categoria.NombreCategoria.ROPA_NINOS,
+								"Prendas de vestir para niños y niñas",
+								"faChildren" },
+						{ Categoria.NombreCategoria.PRODUCTOS_BEBES,
+								"Pañales, fórmulas y artículos para bebés",
+								"faBaby" }
 				};
-				for (String[] d : categoriasData) {
-					Categoria c = new Categoria(d[0], d[1]);
-					c.setIcono(d[2]);
+				for (Object[] d : categoriasData) {
+					Categoria c = new Categoria();
+					c.setNombre((Categoria.NombreCategoria) d[0]);
+					c.setDescripcion((String) d[1]);
+					c.setIcono((String) d[2]);
 					categoriaRepo.save(c);
 				}
-				log.info("Precargando 10 categorías con íconos...");
+				log.info("Precargando 17 categorías con íconos...");
 			} else {
 				log.info("Las categorías ya existen, omitiendo...");
 			}
+
 
 			// ── 3. PROVEEDORES ────────────────────────────────────────────────
 			if (proveedorRepo.count() == 0) {
@@ -377,8 +412,8 @@ public class LoadDatabase {
 				};
 
 				for (int i = 0; i < 50; i++) {
-					Categoria cat = categorias.get(i / 5); // 5 productos por categoría
-					Proveedor prov = proveedores.get(i / 5); // proveedor alineado a categoría
+					Categoria cat = categorias.get(i % categorias.size());
+					Proveedor prov = proveedores.get(i % proveedores.size());
 					LocalDate vencimiento = (i < 30) // Alimentos perecederos tienen vencimiento
 							? LocalDate.now().plusMonths(3 + (i % 6))
 							: null;

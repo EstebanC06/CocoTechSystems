@@ -7,7 +7,10 @@ package co.edu.unbosque.cocotechback.model;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,12 +22,41 @@ import jakarta.persistence.Table;
  * Entidad JPA que representa una categoría de productos del supermercado.
  * <p>
  * Las categorías permiten clasificar y organizar los productos disponibles
- * en el supermercado (ej. Lácteos, Bebidas, Carnes, Aseo). Cada categoría
- * cuenta con varios productos que pertenecen a ella.
+ * en el supermercado (ej. Frutas y verduras, Aseo, Tecnología). El nombre
+ * está restringido al enum {@link NombreCategoria} para garantizar valores
+ * consistentes en toda la aplicación y permitir filtros confiables en el
+ * front-end.
  */
 @Entity
 @Table(name = "categoria")
 public class Categoria {
+
+	/**
+	 * Conjunto cerrado de categorías permitidas en el supermercado.
+	 * <p>
+	 * Cualquier producto debe pertenecer obligatoriamente a uno de estos
+	 * valores. El front-end usa este enum para construir el combobox de
+	 * filtrado por categoría.
+	 */
+	public enum NombreCategoria {
+		ASEO,
+		FRUTAS_VERDURAS,
+		DERIVADOS_DE_ANIMALES,
+		BEBIDAS_NO_ALCOHOLICAS,
+		CONGELADOS,
+		PANADERIA_REPOSTERIA,
+		DESPENSA,
+		PAQUETES_GALLETAS,
+		DULCES,
+		BEBIDAS_ALCOHOLICAS,
+		TECNOLOGIA,
+		CUIDADO_PERSONAL,
+		ELECTRODOMESTICOS,
+		ROPA_MUJER,
+		ROPA_HOMBRE,
+		ROPA_NINOS,
+		PRODUCTOS_BEBES
+	}
 
 	/**
 	 * Identificador único de la categoría, generado automáticamente por la base
@@ -35,9 +67,13 @@ public class Categoria {
 	private Long idCategoria;
 
 	/**
-	 * Nombre de la categoría (ej. "Lácteos", "Bebidas", "Carnes").
+	 * Nombre de la categoría. Restringido al enum {@link NombreCategoria}.
+	 * Se persiste como cadena (no como ordinal) para mantener integridad
+	 * aunque cambie el orden de los valores del enum en el futuro.
 	 */
-	private String nombre;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, unique = true)
+	private NombreCategoria nombre;
 
 	/**
 	 * Descripción detallada de la categoría y los productos que incluye.
@@ -48,7 +84,7 @@ public class Categoria {
 	 * URL de la imagen representativa de la categoría para mostrar en el
 	 * e-commerce.
 	 */
-	@jakarta.persistence.Column(length = 500)
+	@Column(length = 500)
 	private String imagenUrl;
 
 	/**
@@ -73,10 +109,10 @@ public class Categoria {
 	/**
 	 * Constructor con parámetros para inicializar los datos de la categoría.
 	 *
-	 * @param nombre      Nombre de la categoría.
+	 * @param nombre      Nombre de la categoría (enum {@link NombreCategoria}).
 	 * @param descripcion Descripción de la categoría.
 	 */
-	public Categoria(String nombre, String descripcion) {
+	public Categoria(NombreCategoria nombre, String descripcion) {
 		this.nombre = nombre;
 		this.descripcion = descripcion;
 	}
@@ -102,9 +138,9 @@ public class Categoria {
 	/**
 	 * Obtiene el nombre de la categoría.
 	 *
-	 * @return El nombre de la categoría.
+	 * @return El nombre de la categoría como valor del enum.
 	 */
-	public String getNombre() {
+	public NombreCategoria getNombre() {
 		return nombre;
 	}
 
@@ -113,7 +149,7 @@ public class Categoria {
 	 *
 	 * @param nombre El nuevo nombre de la categoría.
 	 */
-	public void setNombre(String nombre) {
+	public void setNombre(NombreCategoria nombre) {
 		this.nombre = nombre;
 	}
 

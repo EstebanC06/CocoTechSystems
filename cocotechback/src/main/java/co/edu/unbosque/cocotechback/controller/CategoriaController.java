@@ -3,8 +3,10 @@
  */
 package co.edu.unbosque.cocotechback.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.cocotechback.dto.CategoriaDTO;
+import co.edu.unbosque.cocotechback.model.Categoria;
 import co.edu.unbosque.cocotechback.service.CategoriaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -76,7 +79,7 @@ public class CategoriaController {
 					.body(Map.of("message", "Ya existe una categoría con ese nombre", "success", false));
 		} else {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(Map.of("message", "Nombre de categoría requerido", "success", false));
+					.body(Map.of("message", "Nombre de categoría inválido o no permitido", "success", false));
 		}
 	}
 
@@ -96,6 +99,24 @@ public class CategoriaController {
 			return new ResponseEntity<>(categorias, HttpStatus.NO_CONTENT);
 		}
 		return new ResponseEntity<>(categorias, HttpStatus.ACCEPTED);
+	}
+
+	/**
+	 * Lista los nombres válidos del enum {@link Categoria.NombreCategoria}.
+	 * <p>
+	 * El front-end puede usar este endpoint para construir el combobox de
+	 * filtrado sin hardcodear los valores.
+	 *
+	 * @return Lista de cadenas con los valores del enum.
+	 */
+	@GetMapping("/nombresValidos")
+	@Operation(summary = "Listar nombres de categoría válidos",
+			description = "Devuelve los valores del enum NombreCategoria")
+	public ResponseEntity<List<String>> nombresValidos() {
+		List<String> nombres = Arrays.stream(Categoria.NombreCategoria.values())
+				.map(Enum::name)
+				.collect(Collectors.toList());
+		return ResponseEntity.ok(nombres);
 	}
 
 	/**
@@ -142,7 +163,7 @@ public class CategoriaController {
 					.body(Map.of("message", "Categoría no encontrada", "success", false));
 		} else {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(Map.of("message", "Error al actualizar la categoría", "success", false));
+					.body(Map.of("message", "Nombre de categoría inválido o no permitido", "success", false));
 		}
 	}
 

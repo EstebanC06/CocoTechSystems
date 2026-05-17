@@ -195,7 +195,7 @@ public class FacturaMongoService {
 				d.setIdProducto(dv.getProducto().getIdProducto());
 				d.setNombreProducto(dv.getProducto().getNombre());
 				if (dv.getProducto().getCategoria() != null) {
-					d.setCategoria(dv.getProducto().getCategoria().getNombre());
+					d.setCategoria(dv.getProducto().getCategoria().getNombre().name());
 				}
 			}
 			d.setCantidad(dv.getCantidadProductos());
