@@ -27,6 +27,7 @@ import Logo from "../../components/common/Logo";
 import ToggleTema from "../../components/common/ToggleTema";
 import { login } from "../../services/auth.service";
 import { useAuth } from "../../context/AuthContext";
+import CampoContrasena from "../../components/common/CampoContrasena";
 
 const loginSchema = z.object({
   username: z
@@ -169,10 +170,9 @@ const Login = () => {
                 helperText={errors.username?.message}
                 sx={{ marginBottom: 2 }}
               />
-              <TextField
+              <CampoContrasena
                 fullWidth
                 label="Contraseña"
-                type="password"
                 placeholder="••••••••"
                 {...register("password")}
                 error={!!errors.password}

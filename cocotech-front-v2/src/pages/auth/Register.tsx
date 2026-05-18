@@ -19,6 +19,7 @@ import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import NavbarEcommerce from "../../components/layout/NavbarEcommerce";
 import { registrarCliente } from "../../services/auth.service";
+import CampoContrasena from "../../components/common/CampoContrasena";
 
 const registroSchema = z
   .object({
@@ -74,7 +75,13 @@ const Register = () => {
         ciudad: data.ciudad,
       });
       setOkMsg("¡Cuenta creada! Revisa tu correo para verificar.");
-      setTimeout(() => navigate("/verificar"), 1500);
+      setTimeout(
+        () =>
+          navigate(`/verificar?correo=${encodeURIComponent(data.correo)}`, {
+            state: { contrasena: data.contrasena },
+          }),
+        1500,
+      );
     } catch (e: any) {
       setErrorMsg(e?.response?.data?.message ?? "Error al crear la cuenta.");
     } finally {
