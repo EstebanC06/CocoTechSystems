@@ -27,7 +27,7 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const sesion = localStorage.getItem("cocotech_session");
+    const sesion = sessionStorage.getItem("cocotech_session");
     if (sesion) {
       try {
         const { token } = JSON.parse(sesion);
@@ -36,7 +36,7 @@ api.interceptors.request.use(
         }
       } catch {
         // Sesión corrupta — limpiar.
-        localStorage.removeItem("cocotech_session");
+        sessionStorage.removeItem("cocotech_session");
       }
     }
     return config;
@@ -52,7 +52,7 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("cocotech_session");
+      sessionStorage.removeItem("cocotech_session");
       // Redirigir solo si no estamos ya en login para evitar bucles.
       if (!window.location.pathname.includes("/login")) {
         window.location.href = "/login";

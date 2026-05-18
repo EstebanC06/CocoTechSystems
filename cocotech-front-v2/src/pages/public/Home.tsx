@@ -27,6 +27,7 @@ import {
   obtenerProductosPublico,
 } from "../../services/publico.service";
 import type { ProductoDTO, CategoriaDTO } from "../../types";
+import { etiquetaCategoria } from "../../utils/etiquetas";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -163,7 +164,7 @@ const Home = () => {
               {categorias.map((c) => (
                 <Chip
                   key={c.idCategoria}
-                  label={c.nombre}
+                  label={etiquetaCategoria(c.nombre)}
                   clickable
                   onClick={() => navigate(`/productos?categoria=${c.idCategoria}`)}
                   sx={{

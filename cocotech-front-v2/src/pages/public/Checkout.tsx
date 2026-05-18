@@ -20,7 +20,7 @@ import {
 import LayoutEcommerce from "../../components/layout/LayoutEcommerce";
 import { useCarrito } from "../../context/CarritoContext";
 import { useAuth } from "../../context/AuthContext";
-import { obtenerSucursales } from "../../services/sucursal.service";
+import { obtenerSucursalesPublico } from "../../services/publico.service";
 import { obtenerClientePorId } from "../../services/cliente.service";
 import { crearPedido } from "../../services/pedido.service";
 import type {
@@ -62,7 +62,7 @@ const Checkout = () => {
       if (!sesion) return;
       try {
         const [sucs, cli] = await Promise.all([
-          obtenerSucursales(),
+          obtenerSucursalesPublico(),
           obtenerClientePorId(sesion.id),
         ]);
         setSucursales(sucs);
@@ -181,8 +181,8 @@ const Checkout = () => {
               Te avisaremos cuando cambie de estado.
             </Typography>
             <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
-              <Button variant="contained" color="secondary" onClick={() => navigate(`/cliente/pedido/${pedidoCreado}`)}>
-                Ver mi pedido
+              <Button variant="contained" color="secondary" onClick={() => navigate("/cliente/pedidos")}>
+              Ver mis pedidos
               </Button>
               <Button variant="outlined" onClick={() => navigate("/productos")}>
                 Seguir comprando

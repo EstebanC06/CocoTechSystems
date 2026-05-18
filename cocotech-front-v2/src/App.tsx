@@ -7,8 +7,13 @@
  *  · Cliente (ROLE_CLIENTE): checkout, pedidos, perfil, direcciones
  *  · Empleado (ROLE_EMPLEADO): dashboard, pedidos, productos, perfil
  *  · Admin (ROLE_ADMIN): dashboard + todos los CRUDs y reportes
+ *
+ * Protección de rutas:
+ *  · <RutaProtegida> envuelve las páginas privadas
+ *  · Si no hay sesión → redirige a /login conservando la URL de origen
+ *  · Si el rol no coincide → redirige al dashboard correspondiente
  */
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import type { JSX } from "react";
 import { TemaProvider } from "./context/TemaContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -56,31 +61,58 @@ import FacturasAdmin from "./pages/admin/FacturasAdmin";
 import ReportesAdmin from "./pages/admin/ReportesAdmin";
 
 /**
- * Protege una ruta verificando autenticación + rol(es) permitido(s).
- * Si no está autenticado, manda a login (preservando intención).
- * Si está autenticado con otro rol, manda a su área correspondiente.
+ * Dashboard por defecto según el rol. Se usa cuando un usuario autenticado
+ * intenta entrar a una ruta de otro rol: lo redirigimos a su área natural
+ * en lugar de mostrarle un error.
  */
-const RutaProtegida = ({
-  children,
-  roles,
-}: {
-  children: JSX.Element;
-  roles: Rol[];
-}) => {
-  const { sesion, estaAutenticado } = useAuth();
-  if (!estaAutenticado) {
-    return (
-      <Navigate
-        to={`/login?redirect=${encodeURIComponent(window.location.pathname)}`}
-        replace
-      />
-    );
+const dashboardPorRol = (rol: Rol): string => {
+  switch (rol) {
+    case "ROLE_ADMIN":
+      return "/admin";
+    case "ROLE_EMPLEADO":
+      return "/empleado";
+    case "ROLE_CLIENTE":
+      return "/";
+    default:
+      return "/";
   }
-  if (!roles.includes(sesion!.rol)) {
-    if (sesion!.rol === "ROLE_ADMIN") return <Navigate to="/admin" replace />;
-    if (sesion!.rol === "ROLE_EMPLEADO")
-      return <Navigate to="/empleado" replace />;
-    return <Navigate to="/" replace />;
+};
+
+/**
+ * Protege una ruta verificando autenticación + rol(es) permitido(s).
+ *
+ *  · Sin sesión → redirige a /login conservando la URL solicitada en `state.from`
+ *    para que después del login se pueda volver a ella.
+ *  · Sesión con rol no permitido → redirige al dashboard del rol del usuario.
+ *  · Sesión con rol permitido → renderiza los hijos.
+ */
+interface RutaProtegidaProps {
+  rolesPermitidos: Rol[];
+  children: JSX.Element;
+}
+
+const RutaProtegida = ({ rolesPermitidos, children }: RutaProtegidaProps): JSX.Element => {
+  const { sesion } = useAuth();
+  const location = useLocation();
+
+  if (!sesion) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
+  if (!rolesPermitidos.includes(sesion.rol)) {
+    return <Navigate to={dashboardPorRol(sesion.rol)} replace />;
+  }
+  return children;
+};
+
+/**
+ * Bloquea las páginas de auth (login/register/verificar/recuperar) cuando ya
+ * hay sesión activa, para evitar que un usuario logueado vuelva a iniciar
+ * sesión sin cerrar la actual. Lo manda a su dashboard.
+ */
+const SoloInvitado = ({ children }: { children: JSX.Element }): JSX.Element => {
+  const { sesion } = useAuth();
+  if (sesion) {
+    return <Navigate to={dashboardPorRol(sesion.rol)} replace />;
   }
   return children;
 };
@@ -95,17 +127,17 @@ const AppRoutes = () => (
     <Route path="/categoria/:id" element={<Catalogo />} />
     <Route path="/carrito" element={<Carrito />} />
 
-    {/* ─── Auth ─── */}
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/verificar" element={<VerificarCodigo />} />
-    <Route path="/recuperar" element={<RecuperarContrasena />} />
+    {/* ─── Auth (solo si NO hay sesión) ─── */}
+    <Route path="/login" element={<SoloInvitado><Login /></SoloInvitado>} />
+    <Route path="/register" element={<SoloInvitado><Register /></SoloInvitado>} />
+    <Route path="/verificar" element={<SoloInvitado><VerificarCodigo /></SoloInvitado>} />
+    <Route path="/recuperar" element={<SoloInvitado><RecuperarContrasena /></SoloInvitado>} />
 
     {/* ─── Cliente (requieren ROLE_CLIENTE) ─── */}
     <Route
       path="/checkout"
       element={
-        <RutaProtegida roles={["ROLE_CLIENTE"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_CLIENTE"]}>
           <Checkout />
         </RutaProtegida>
       }
@@ -113,7 +145,7 @@ const AppRoutes = () => (
     <Route
       path="/cliente/pedidos"
       element={
-        <RutaProtegida roles={["ROLE_CLIENTE"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_CLIENTE"]}>
           <MisPedidos />
         </RutaProtegida>
       }
@@ -121,7 +153,7 @@ const AppRoutes = () => (
     <Route
       path="/cliente/pedido/:id"
       element={
-        <RutaProtegida roles={["ROLE_CLIENTE"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_CLIENTE"]}>
           <DetallePedidoCliente />
         </RutaProtegida>
       }
@@ -129,7 +161,7 @@ const AppRoutes = () => (
     <Route
       path="/cliente/perfil"
       element={
-        <RutaProtegida roles={["ROLE_CLIENTE"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_CLIENTE"]}>
           <PerfilCliente />
         </RutaProtegida>
       }
@@ -137,17 +169,17 @@ const AppRoutes = () => (
     <Route
       path="/cliente/direcciones"
       element={
-        <RutaProtegida roles={["ROLE_CLIENTE"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_CLIENTE"]}>
           <MisDirecciones />
         </RutaProtegida>
       }
     />
 
-    {/* ─── Empleado (requieren ROLE_EMPLEADO) ─── */}
+    {/* ─── Empleado (requieren ROLE_EMPLEADO; admin también puede acceder) ─── */}
     <Route
       path="/empleado"
       element={
-        <RutaProtegida roles={["ROLE_EMPLEADO"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_EMPLEADO", "ROLE_ADMIN"]}>
           <DashboardEmpleado />
         </RutaProtegida>
       }
@@ -155,7 +187,7 @@ const AppRoutes = () => (
     <Route
       path="/empleado/pedidos"
       element={
-        <RutaProtegida roles={["ROLE_EMPLEADO"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_EMPLEADO", "ROLE_ADMIN"]}>
           <PedidosEmpleado />
         </RutaProtegida>
       }
@@ -163,7 +195,7 @@ const AppRoutes = () => (
     <Route
       path="/empleado/productos"
       element={
-        <RutaProtegida roles={["ROLE_EMPLEADO"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_EMPLEADO", "ROLE_ADMIN"]}>
           <ProductosEmpleado />
         </RutaProtegida>
       }
@@ -171,7 +203,7 @@ const AppRoutes = () => (
     <Route
       path="/empleado/perfil"
       element={
-        <RutaProtegida roles={["ROLE_EMPLEADO"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_EMPLEADO", "ROLE_ADMIN"]}>
           <PerfilEmpleado />
         </RutaProtegida>
       }
@@ -181,7 +213,7 @@ const AppRoutes = () => (
     <Route
       path="/admin"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <DashboardAdmin />
         </RutaProtegida>
       }
@@ -189,7 +221,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/pedidos"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <PedidosAdmin />
         </RutaProtegida>
       }
@@ -197,7 +229,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/clientes"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <ClientesAdmin />
         </RutaProtegida>
       }
@@ -205,7 +237,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/productos"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <ProductosAdmin />
         </RutaProtegida>
       }
@@ -213,7 +245,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/inventario"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <InventarioAdmin />
         </RutaProtegida>
       }
@@ -221,7 +253,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/categorias"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <CategoriasAdmin />
         </RutaProtegida>
       }
@@ -229,7 +261,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/proveedores"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <ProveedoresAdmin />
         </RutaProtegida>
       }
@@ -237,7 +269,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/empleados"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <EmpleadosAdmin />
         </RutaProtegida>
       }
@@ -245,7 +277,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/sucursales"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <SucursalesAdmin />
         </RutaProtegida>
       }
@@ -253,7 +285,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/cajas"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <CajasAdmin />
         </RutaProtegida>
       }
@@ -261,7 +293,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/ventas"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <VentasAdmin />
         </RutaProtegida>
       }
@@ -269,7 +301,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/facturas"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <FacturasAdmin />
         </RutaProtegida>
       }
@@ -277,7 +309,7 @@ const AppRoutes = () => (
     <Route
       path="/admin/reportes"
       element={
-        <RutaProtegida roles={["ROLE_ADMIN"]}>
+        <RutaProtegida rolesPermitidos={["ROLE_ADMIN"]}>
           <ReportesAdmin />
         </RutaProtegida>
       }

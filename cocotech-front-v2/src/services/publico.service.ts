@@ -10,7 +10,7 @@
  */
 import axios from "axios";
 import api, { BASE_URL } from "./api";
-import type { ProductoDTO, CategoriaDTO } from "../types";
+import type { ProductoDTO, CategoriaDTO, SucursalDTO } from "../types";
 
 /**
  * Cliente axios sin interceptor de JWT, para llamadas públicas.
@@ -88,6 +88,17 @@ export const obtenerCategoriasPublico = async (): Promise<CategoriaDTO[]> => {
     return r.data;
   } catch {
     const r = await api.get<CategoriaDTO[]>("/categoria/mostrarTodas");
+    return r.data;
+  }
+};
+
+/** Sucursales disponibles para checkout (sin requerir login). */
+export const obtenerSucursalesPublico = async (): Promise<SucursalDTO[]> => {
+  try {
+    const r = await apiPublico.get<SucursalDTO[]>("/publico/sucursal/mostrarTodas");
+    return r.data;
+  } catch {
+    const r = await api.get<SucursalDTO[]>("/sucursal/mostrarTodas");
     return r.data;
   }
 };

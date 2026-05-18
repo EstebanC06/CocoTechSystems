@@ -38,8 +38,24 @@ const PerfilCliente = () => {
     cargar();
   }, [sesion]);
 
+  /** Devuelve true si TODOS los campos requeridos tienen valor no vacío. */
+  const camposCompletos = (): boolean => {
+    if (!cliente) return false;
+    return (
+      !!cliente.nombres?.trim() &&
+      !!cliente.apellidos?.trim() &&
+      !!cliente.correo?.trim() &&
+      !!cliente.telefono?.trim()
+    );
+  };
+
   const guardar = async () => {
     if (!cliente || !sesion) return;
+    if (!camposCompletos()) {
+      setOk("");
+      setError("Todos los campos son obligatorios. No puedes dejar ninguno vacío.");
+      return;
+    }
     setGuardando(true);
     setOk(""); setError("");
     try {
@@ -101,13 +117,59 @@ const PerfilCliente = () => {
           <Box className="coco-card">
             <Typography sx={{ fontWeight: 600, marginBottom: 2 }}>Datos personales</Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Nombres" value={cliente.nombres} onChange={(e) => setCliente({ ...cliente, nombres: e.target.value })} /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Apellidos" value={cliente.apellidos} onChange={(e) => setCliente({ ...cliente, apellidos: e.target.value })} /></Grid>
-              <Grid size={12}><TextField fullWidth label="Correo" type="email" value={cliente.correo} onChange={(e) => setCliente({ ...cliente, correo: e.target.value })} /></Grid>
-              <Grid size={12}><TextField fullWidth label="Teléfono" value={cliente.telefono} onChange={(e) => setCliente({ ...cliente, telefono: e.target.value })} /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Nombres"
+                  value={cliente.nombres}
+                  onChange={(e) => setCliente({ ...cliente, nombres: e.target.value })}
+                  error={!cliente.nombres?.trim()}
+                  helperText={!cliente.nombres?.trim() ? "Este campo no puede estar vacío" : ""}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Apellidos"
+                  value={cliente.apellidos}
+                  onChange={(e) => setCliente({ ...cliente, apellidos: e.target.value })}
+                  error={!cliente.apellidos?.trim()}
+                  helperText={!cliente.apellidos?.trim() ? "Este campo no puede estar vacío" : ""}
+                />
+              </Grid>
+              <Grid size={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Correo"
+                  type="email"
+                  value={cliente.correo}
+                  onChange={(e) => setCliente({ ...cliente, correo: e.target.value })}
+                  error={!cliente.correo?.trim()}
+                  helperText={!cliente.correo?.trim() ? "Este campo no puede estar vacío" : ""}
+                />
+              </Grid>
+              <Grid size={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Teléfono"
+                  value={cliente.telefono}
+                  onChange={(e) => setCliente({ ...cliente, telefono: e.target.value })}
+                  error={!cliente.telefono?.trim()}
+                  helperText={!cliente.telefono?.trim() ? "Este campo no puede estar vacío" : ""}
+                />
+              </Grid>
             </Grid>
             <Box sx={{ marginTop: 3, textAlign: "right" }}>
-              <Button variant="contained" color="secondary" onClick={guardar} disabled={guardando}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={guardar}
+                disabled={guardando || !camposCompletos()}
+              >
                 {guardando ? <CircularProgress size={20} color="inherit" /> : "Guardar cambios"}
               </Button>
             </Box>

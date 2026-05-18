@@ -28,6 +28,7 @@ import {
   obtenerCategoriasPublico,
 } from "../../services/publico.service";
 import type { ProductoDTO, CategoriaDTO } from "../../types";
+import { etiquetaCategoria } from "../../utils/etiquetas";
 
 type Orden = "relevancia" | "precio_asc" | "precio_desc" | "nombre";
 
@@ -207,7 +208,7 @@ const Catalogo = () => {
                     "&:hover": { backgroundColor: "var(--coco-surface-2)" },
                   }}
                 >
-                  {c.nombre}
+                  {etiquetaCategoria(c.nombre)}
                 </Box>
               ))}
             </Box>

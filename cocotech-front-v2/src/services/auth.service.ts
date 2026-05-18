@@ -48,14 +48,14 @@ export const recuperarContrasenaCliente = async (correo: string) => {
  * Guarda la sesión del usuario en localStorage tras un login exitoso.
  */
 export const guardarSesion = (sesion: SesionUsuario): void => {
-  localStorage.setItem("cocotech_session", JSON.stringify(sesion));
+  sessionStorage.setItem("cocotech_session", JSON.stringify(sesion));
 };
 
 /**
  * Obtiene la sesión actual desde localStorage, o null si no hay sesión.
  */
 export const obtenerSesion = (): SesionUsuario | null => {
-  const raw = localStorage.getItem("cocotech_session");
+  const raw = sessionStorage.getItem("cocotech_session");
   if (!raw) return null;
   try {
     return JSON.parse(raw) as SesionUsuario;
@@ -68,7 +68,7 @@ export const obtenerSesion = (): SesionUsuario | null => {
  * Cierra la sesión del usuario.
  */
 export const cerrarSesion = (): void => {
-  localStorage.removeItem("cocotech_session");
+  sessionStorage.removeItem("cocotech_session");
 };
 
 /**
