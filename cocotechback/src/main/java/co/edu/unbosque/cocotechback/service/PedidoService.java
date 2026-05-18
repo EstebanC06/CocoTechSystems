@@ -245,12 +245,21 @@ public class PedidoService {
 		pedido.setCostoEnvio(costoEnvio);
 		pedido.setTotal(subtotalCalculado + ivaCalculado + costoEnvio);
 
-		// Decrementar stock (ya validado arriba que alcanza)
-		for (int i = 0; i < detalles.size(); i++) {
-			Producto prod = productosResueltos.get(i);
-			int stockActual = prod.getStock() != null ? prod.getStock() : 0;
-			prod.setStock(stockActual - detalles.get(i).getCantidad());
-			productoRepo.save(prod);
+		// Decrementar stock. La validación pre-emptiva de arriba ya garantizó
+		// que hay stock suficiente al momento de la llamada, pero el motor
+		// (CHECK + TRIGGER) es la última línea de defensa contra race
+		// conditions: si entre nuestra validación y este UPDATE otra
+		// transacción concurrente bajó el stock, el motor aborta la
+		// operación y atrapamos la excepción aquí.
+		try {
+			for (int i = 0; i < detalles.size(); i++) {
+				Producto prod = productosResueltos.get(i);
+				int stockActual = prod.getStock() != null ? prod.getStock() : 0;
+				prod.setStock(stockActual - detalles.get(i).getCantidad());
+				productoRepo.saveAndFlush(prod);
+			}
+		} catch (org.springframework.dao.DataIntegrityViolationException e) {
+			return 3; // stock insuficiente (race condition detectada por el motor)
 		}
 
 		// Persistir el pedido (los detalles van en cascada)

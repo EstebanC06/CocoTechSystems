@@ -6,15 +6,22 @@ package co.edu.unbosque.cocotechback.service;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
+
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.MergeOptions;
 
 import co.edu.unbosque.cocotechback.model.mongo.ReporteVentasMensual;
 import co.edu.unbosque.cocotechback.repository.mongo.FacturaDocumentoRepository;
@@ -27,6 +34,10 @@ import co.edu.unbosque.cocotechback.repository.mongo.ReporteVentasMensualReposit
  * Los reportes se recalculan bajo demanda o de manera programada y se
  * persisten para que los dashboards y consultas posteriores los obtengan
  * con una sola lectura O(1), en lugar de recalcular agregaciones cada vez.
+ * <p>
+ * El recálculo mensual delega TODA la lógica al motor MongoDB usando un
+ * pipeline de agregación con la etapa {@code $merge}: ni los documentos
+ * intermedios ni los reportes finales viajan al backend Java.
  */
 @Service
 public class ReporteService {
@@ -44,9 +55,19 @@ public class ReporteService {
 
 	/**
 	 * Repositorio de facturas embebidas, fuente para el cómputo.
+	 * Se conserva para otras consultas del módulo aunque {@code recalcularMes}
+	 * ya no lo use directamente.
 	 */
 	@Autowired
+	@SuppressWarnings("unused")
 	private FacturaDocumentoRepository facturaDocRepo;
+
+	/**
+	 * Plantilla de Mongo para ejecutar pipelines avanzados (como los que
+	 * usan {@code $merge}) que Spring Data no expone vía repositorios.
+	 */
+	@Autowired
+	private MongoTemplate mongoTemplate;
 
 	/**
 	 * Constructor por defecto.
@@ -56,61 +77,88 @@ public class ReporteService {
 
 	/**
 	 * Recalcula los reportes mensuales por sucursal para un año y mes
-	 * dados, y los persiste en MongoDB.
+	 * dados, delegando TODA la agregación y persistencia al motor MongoDB
+	 * vía pipeline con {@code $merge}.
 	 * <p>
-	 * Sobrescribe los reportes existentes para ese periodo.
+	 * A diferencia de la implementación anterior (bucle en Java sobre los
+	 * resultados de la agregación), aquí ningún documento viaja al backend:
+	 * Mongo lee {@code facturas}, agrupa por sucursal, calcula totales y
+	 * escribe directamente en {@code reportes_ventas_mensuales}.
 	 *
 	 * @param anio año del reporte.
 	 * @param mes  mes del reporte (1-12).
-	 * @return cantidad de reportes generados.
+	 * @return cantidad de reportes que quedaron en la colección para ese
+	 *         periodo tras la ejecución.
 	 */
 	public int recalcularMes(Integer anio, Integer mes) {
 		YearMonth ym = YearMonth.of(anio, mes);
 		LocalDateTime inicio = ym.atDay(1).atStartOfDay();
 		LocalDateTime fin = ym.atEndOfMonth().atTime(23, 59, 59);
 
-		List<Document> agregados = facturaDocRepo.ingresoBrutoPorSucursal(inicio, fin);
-		int generados = 0;
+		// Convertir LocalDateTime a Date para que MongoTemplate los acepte
+		// como BSON dates dentro del pipeline.
+		Date inicioDate = Date.from(
+				inicio.atZone(ZoneId.systemDefault()).toInstant());
+		Date finDate = Date.from(
+				fin.atZone(ZoneId.systemDefault()).toInstant());
 
-		for (Document agg : agregados) {
-			// El pipeline agrupa por un _id compuesto { idSucursal, nombre },
-			// de modo que cada reporte queda correctamente asociado al ID de
-			// la sucursal en MySQL y no solo a su nombre.
-			Document idGroup = agg.get("_id", Document.class);
-			Long idSucursal = idGroup != null ? readLong(idGroup, "idSucursal") : null;
-			String nombreSucursal = idGroup != null
-					? idGroup.getString("nombre")
-					: null;
+		// Construir el pipeline equivalente al manual de Mongo.
+		List<Bson> pipeline = new ArrayList<>();
 
-			Double ingresoBruto = readDouble(agg, "ingresoBruto");
-			Double impuestos = readDouble(agg, "impuestos");
-			Long cantidadFacturas = readLong(agg, "cantidadFacturas");
-			Double ticketPromedio = (cantidadFacturas != null && cantidadFacturas > 0)
-					? ingresoBruto / cantidadFacturas
-					: 0.0;
+		// 1) $match: filtrar facturas del periodo solicitado.
+		pipeline.add(new Document("$match",
+				new Document("fecha",
+						new Document("$gte", inicioDate)
+								.append("$lte", finDate))));
 
-			// Se busca un reporte existente para ese periodo y sucursal; si
-			// existe se actualiza, si no, se crea uno nuevo (upsert lógico).
-			Optional<ReporteVentasMensual> existente = reporteRepo
-					.findByAnioAndMesAndIdSucursal(anio, mes, idSucursal);
+		// 2) $group: agrupar por sucursal y sumar totales.
+		pipeline.add(new Document("$group",
+				new Document("_id",
+						new Document("idSucursal", "$sucursal.idSucursal")
+								.append("nombre", "$sucursal.nombre"))
+						.append("cantidadFacturas", new Document("$sum", 1))
+						.append("ingresoBruto", new Document("$sum", "$precioTotal"))
+						.append("totalImpuestos", new Document("$sum", "$precioImpuestos"))));
 
-			ReporteVentasMensual r = existente.orElseGet(ReporteVentasMensual::new);
-			r.setAnio(anio);
-			r.setMes(mes);
-			r.setIdSucursal(idSucursal);
-			r.setNombreSucursal(nombreSucursal);
-			r.setCantidadFacturas(cantidadFacturas);
-			r.setIngresoBruto(ingresoBruto);
-			r.setTotalImpuestos(impuestos);
-			r.setTicketPromedio(ticketPromedio);
-			r.setActualizadoEn(LocalDateTime.now());
+		// 3) $project: formar el documento final del reporte, agregando
+		//    año, mes, ticket promedio y timestamp del servidor.
+		pipeline.add(new Document("$project",
+				new Document("_id", 0)
+						.append("anio", new Document("$literal", anio))
+						.append("mes", new Document("$literal", mes))
+						.append("idSucursal", "$_id.idSucursal")
+						.append("nombreSucursal", "$_id.nombre")
+						.append("cantidadFacturas", 1)
+						.append("ingresoBruto", 1)
+						.append("totalImpuestos", 1)
+						.append("ticketPromedio",
+								new Document("$cond", List.of(
+										new Document("$gt", List.of("$cantidadFacturas", 0)),
+										new Document("$divide",
+												List.of("$ingresoBruto", "$cantidadFacturas")),
+										0)))
+						.append("actualizadoEn", "$$NOW")));
 
-			reporteRepo.save(r);
-			generados++;
-		}
+		// 4) $merge: escribir directo a reportes_ventas_mensuales usando
+		//    como clave compuesta (anio, mes, idSucursal). Si ya existe →
+		//    replace, si no existe → insert. Requiere índice único sobre
+		//    esas tres columnas (creado en el script de migración Mongo).
+		pipeline.add(Aggregates.merge("reportes_ventas_mensuales",
+				new MergeOptions()
+						.uniqueIdentifier(List.of("anio", "mes", "idSucursal"))
+						.whenMatched(MergeOptions.WhenMatched.REPLACE)
+						.whenNotMatched(MergeOptions.WhenNotMatched.INSERT)));
 
-		log.info("Reportes mensuales recalculados para {}-{}: {} sucursales",
-				anio, mes, generados);
+		// Ejecutar el pipeline contra la colección "facturas". $merge es
+		// terminal: no devuelve documentos, solo escribe en destino.
+		mongoTemplate.getCollection("facturas").aggregate(pipeline).toCollection();
+
+		// Contar cuántos reportes quedaron para ese periodo (lo que el
+		// pipeline acaba de producir o actualizar).
+		int generados = reporteRepo.findByAnioAndMes(anio, mes).size();
+
+		log.info("Reportes mensuales recalculados con $merge para {}-{}: "
+				+ "{} sucursales", anio, mes, generados);
 		return generados;
 	}
 
@@ -135,38 +183,6 @@ public class ReporteService {
 	public List<ReporteVentasMensual> getEvolucionAnualPorSucursal(
 			Integer anio, Long idSucursal) {
 		return reporteRepo.findByAnioAndIdSucursalOrderByMesAsc(anio, idSucursal);
-	}
-
-	// ─── Helpers de lectura del Document de Mongo ────────────────────
-
-	/**
-	 * Lee un campo numérico como Double, tolerando que venga como Integer.
-	 *
-	 * @param doc   documento BSON.
-	 * @param campo nombre del campo.
-	 * @return el valor convertido a Double, o {@code 0.0} si no existe.
-	 */
-	private Double readDouble(Document doc, String campo) {
-		Object value = doc.get(campo);
-		if (value instanceof Number n) {
-			return n.doubleValue();
-		}
-		return 0.0;
-	}
-
-	/**
-	 * Lee un campo numérico como Long.
-	 *
-	 * @param doc   documento BSON.
-	 * @param campo nombre del campo.
-	 * @return el valor convertido a Long, o {@code 0L} si no existe.
-	 */
-	private Long readLong(Document doc, String campo) {
-		Object value = doc.get(campo);
-		if (value instanceof Number n) {
-			return n.longValue();
-		}
-		return 0L;
 	}
 
 	/**
