@@ -163,7 +163,7 @@ const ReportesAdmin = () => {
   // ahora mostramos el resumen general por número de ventas.
   // Para algo concreto, dejamos esta tarjeta con un fallback útil:
   // Empleado del mes: calculado por el stored procedure sp_empleado_del_mes
-  // del motor MySQL. Recibe la fila top de la agregación ya hecha en BD.
+  // del motor MySQL.Recibe la fila top de la agregación ya hecha en BD.
   const empleadoMes = empleadoMesData;
 
   // Cliente top: el que más GASTÓ en el rango.
