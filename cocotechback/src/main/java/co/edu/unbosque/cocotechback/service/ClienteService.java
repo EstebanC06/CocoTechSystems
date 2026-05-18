@@ -46,6 +46,13 @@ public class ClienteService implements CRUDOperation<ClienteDTO, Cliente> {
 	 */
 	@Autowired
 	private ModelMapper modelMapper;
+	
+	/**
+	 * Servicio de envío de correos para notificar códigos de verificación
+	 * y recuperación al usuario.
+	 */
+	@Autowired
+	private EmailService emailService;
 
 	/**
 	 * Codificador de contraseñas BCrypt para la seguridad de las credenciales
@@ -81,22 +88,31 @@ public class ClienteService implements CRUDOperation<ClienteDTO, Cliente> {
 		if (!areRequiredFieldsPresent(data)) {
 			return 4;
 		}
-		if (clienteRepo.existsByCorreo(data.getCorreo())) {
+		if (clienteRepo.existsByCorreo(AESUtil.encrypt(data.getCorreo()))) {
 			return 1;
 		}
+		// Generar código de verificación de 6 dígitos en texto plano.
+		// Lo persistimos encriptado en BD para que solo el flujo de
+		// verificación legítimo pueda validarlo.
+		String codigoPlano = EmailService.generarCodigo6Digitos();
+
 		Cliente entity = new Cliente();
 		entity.setNombres(data.getNombres());
 		entity.setApellidos(data.getApellidos());
 		entity.setCorreo(AESUtil.encrypt(data.getCorreo()));
 		entity.setContrasena(passwordEncoder.encode(data.getContrasena()));
-		entity.setCodigoVerificacion(AESUtil.encrypt(
-				data.getCodigoVerificacion() != null ? data.getCodigoVerificacion() : "0"));
+		entity.setCodigoVerificacion(AESUtil.encrypt(codigoPlano));
 		entity.setTelefono(data.getTelefono());
 		entity.setCalle(data.getCalle());
 		entity.setBarrio(data.getBarrio());
 		entity.setCiudad(data.getCiudad());
 		entity.setRol(Rol.ROLE_CLIENTE);
 		clienteRepo.save(entity);
+
+		// Disparar correo. Si falla SMTP, el registro se completa igual y
+		// queda log de error en consola.
+		emailService.enviarCodigoVerificacion(data.getCorreo(), codigoPlano);
+
 		return 0;
 	}
 
@@ -436,5 +452,89 @@ public class ClienteService implements CRUDOperation<ClienteDTO, Cliente> {
 				&& data.getApellidos() != null && !data.getApellidos().isEmpty()
 				&& data.getCorreo() != null && !data.getCorreo().isEmpty()
 				&& data.getContrasena() != null && !data.getContrasena().isEmpty();
+	}
+	
+	/**
+	 * Valida un código de verificación contra el guardado en BD para un
+	 * correo. Si coincide, el código se "consume" reemplazándolo por "0"
+	 * para que no pueda volverse a usar.
+	 *
+	 * @param correo Correo del usuario.
+	 * @param codigo Código en texto plano enviado por el usuario.
+	 * @return {@code 0} si el código es válido y se consumió,
+	 *         {@code 1} si el código no coincide,
+	 *         {@code 2} si no existe el correo.
+	 */
+	public int verificarCodigo(String correo, String codigo) {
+		Optional<Cliente> found = clienteRepo.findByCorreo(AESUtil.encrypt(correo));
+		if (!found.isPresent()) {
+			return 2;
+		}
+		Cliente temp = found.get();
+		String codigoGuardado = AESUtil.decrypt(temp.getCodigoVerificacion());
+		if (!codigo.equals(codigoGuardado)) {
+			return 1;
+		}
+		// Consumir: poner el código en "0" para que un mismo código no
+		// pueda usarse dos veces.
+		temp.setCodigoVerificacion(AESUtil.encrypt("0"));
+		clienteRepo.save(temp);
+		return 0;
+	}
+
+	/**
+	 * Genera y envía un código nuevo de recuperación de contraseña al
+	 * correo del cliente. Sobrescribe cualquier código previo.
+	 *
+	 * @param correo Correo del cliente que solicita recuperación.
+	 * @return {@code 0} si se generó y envió el código,
+	 *         {@code 2} si no existe el correo en el sistema.
+	 */
+	public int solicitarCodigoRecuperacion(String correo) {
+		Optional<Cliente> found = clienteRepo.findByCorreo(AESUtil.encrypt(correo));
+		if (!found.isPresent()) {
+			return 2;
+		}
+		String codigoPlano = EmailService.generarCodigo6Digitos();
+		Cliente temp = found.get();
+		temp.setCodigoVerificacion(AESUtil.encrypt(codigoPlano));
+		clienteRepo.save(temp);
+
+		emailService.enviarCodigoRecuperacion(correo, codigoPlano);
+		return 0;
+	}
+
+	/**
+	 * Cambia la contraseña de un cliente validando previamente el código
+	 * de recuperación recibido. Es el método correcto para el flujo
+	 * seguro de recuperación.
+	 *
+	 * @param correo          Correo del cliente.
+	 * @param codigo          Código de recuperación enviado por email.
+	 * @param nuevaContrasena Nueva contraseña en texto plano.
+	 * @return {@code 0} si la contraseña se actualizó correctamente,
+	 *         {@code 1} si el código no coincide,
+	 *         {@code 2} si no existe el correo,
+	 *         {@code 4} si la nueva contraseña es nula o vacía.
+	 */
+	public int recuperarContrasenaConCodigo(String correo, String codigo,
+			String nuevaContrasena) {
+		if (nuevaContrasena == null || nuevaContrasena.isEmpty()) {
+			return 4;
+		}
+		Optional<Cliente> found = clienteRepo.findByCorreo(AESUtil.encrypt(correo));
+		if (!found.isPresent()) {
+			return 2;
+		}
+		Cliente temp = found.get();
+		String codigoGuardado = AESUtil.decrypt(temp.getCodigoVerificacion());
+		if (!codigo.equals(codigoGuardado)) {
+			return 1;
+		}
+		temp.setContrasena(passwordEncoder.encode(nuevaContrasena));
+		// Consumir el código tras uso exitoso.
+		temp.setCodigoVerificacion(AESUtil.encrypt("0"));
+		clienteRepo.save(temp);
+		return 0;
 	}
 }

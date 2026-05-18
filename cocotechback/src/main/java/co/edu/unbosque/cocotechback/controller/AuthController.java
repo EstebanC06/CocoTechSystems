@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import co.edu.unbosque.cocotechback.dto.ClienteDTO;
 import co.edu.unbosque.cocotechback.dto.EmpleadoDTO;
@@ -148,35 +149,125 @@ public class AuthController {
 	}
 
 	/**
-	 * Endpoint para que un cliente recupere su contraseña.
+	 * Endpoint para que un cliente complete la recuperación de su contraseña
+	 * usando el código de 6 dígitos que recibió por correo.
 	 * <p>
-	 * Busca al cliente por correo electrónico y actualiza su contraseña con la
-	 * nueva proporcionada (codificada con BCrypt).
+	 * Recibe los tres datos en el cuerpo de la petición (no como query
+	 * params) para no exponer la nueva contraseña en URL ni en logs.
 	 *
-	 * @param correo          El correo electrónico del cliente en texto plano.
-	 * @param nuevaContrasena La nueva contraseña en texto plano.
-	 * @return {@code 202 Accepted} si fue exitoso,
-	 *         {@code 404 Not Found} si el cliente no existe,
-	 *         {@code 400 Bad Request} si la contraseña es inválida.
+	 * @param body Cuerpo JSON con las claves {@code correo}, {@code codigo}
+	 *             y {@code nuevaContrasena}.
+	 * @return {@code 202 Accepted} si la contraseña se actualizó,
+	 *         {@code 401 Unauthorized} si el código no coincide,
+	 *         {@code 404 Not Found} si el correo no existe,
+	 *         {@code 400 Bad Request} si la nueva contraseña es inválida.
 	 */
 	@PutMapping("/recuperarContrasenaCliente")
-	@Operation(summary = "Recuperar contraseña de cliente",
-			description = "Actualiza la contraseña de un cliente por su correo")
-	public ResponseEntity<?> recuperarContrasenaCliente(@RequestParam String correo,
-			@RequestParam String nuevaContrasena) {
-		ClienteDTO dto = new ClienteDTO();
-		dto.setCorreo(correo);
-		dto.setContrasena(nuevaContrasena);
-		int status = clienteService.rememberPassword(dto);
+	@Operation(summary = "Recuperar contraseña de cliente con código",
+			description = "Valida el código de recuperación enviado por correo y actualiza la contraseña")
+	public ResponseEntity<?> recuperarContrasenaCliente(
+			@RequestBody Map<String, String> body) {
+		String correo = body.get("correo");
+		String codigo = body.get("codigo");
+		String nuevaContrasena = body.get("nuevaContrasena");
+
+		if (correo == null || codigo == null || nuevaContrasena == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(Map.of("message",
+							"Faltan campos: correo, codigo o nuevaContrasena",
+							"success", false));
+		}
+
+		int status = clienteService.recuperarContrasenaConCodigo(
+				correo, codigo, nuevaContrasena);
 		if (status == 0) {
 			return ResponseEntity.status(HttpStatus.ACCEPTED)
-					.body(Map.of("message", "Contraseña actualizada exitosamente", "success", true));
+					.body(Map.of("message",
+							"Contraseña actualizada exitosamente",
+							"success", true));
+		} else if (status == 1) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(Map.of("message",
+							"Código de recuperación incorrecto",
+							"success", false));
 		} else if (status == 2) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
-					.body(Map.of("message", "Cliente no encontrado", "success", false));
+					.body(Map.of("message", "Cliente no encontrado",
+							"success", false));
 		} else {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-					.body(Map.of("message", "Contraseña inválida o ausente", "success", false));
+					.body(Map.of("message",
+							"Contraseña inválida o ausente",
+							"success", false));
+		}
+	}
+	
+	/**
+	 * Endpoint para verificar el código de 6 dígitos que el cliente recibió
+	 * por correo después de registrarse. Si el código es válido, se consume
+	 * (no puede usarse de nuevo).
+	 *
+	 * @param body Cuerpo JSON con las claves {@code correo} y {@code codigo}.
+	 * @return {@code 200 OK} si el código es válido y se consumió,
+	 *         {@code 401 Unauthorized} si el código no coincide,
+	 *         {@code 404 Not Found} si no existe el correo,
+	 *         {@code 400 Bad Request} si faltan campos.
+	 */
+	@PostMapping("/verificarCodigo")
+	@Operation(summary = "Verificar código de registro",
+			description = "Valida el código de 6 dígitos enviado por correo al registrarse")
+	public ResponseEntity<?> verificarCodigo(@RequestBody Map<String, String> body) {
+		String correo = body.get("correo");
+		String codigo = body.get("codigo");
+		if (correo == null || codigo == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(Map.of("message", "Faltan campos: correo o codigo",
+							"success", false));
+		}
+		int status = clienteService.verificarCodigo(correo, codigo);
+		if (status == 0) {
+			return ResponseEntity.ok(Map.of("message", "Código verificado",
+					"success", true));
+		} else if (status == 1) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(Map.of("message", "Código incorrecto",
+							"success", false));
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(Map.of("message", "Cliente no encontrado",
+							"success", false));
+		}
+	}
+
+	/**
+	 * Endpoint para que un cliente solicite un nuevo código de recuperación
+	 * de contraseña. Si el correo existe, se genera un código de 6 dígitos
+	 * y se envía por email.
+	 *
+	 * @param body Cuerpo JSON con la clave {@code correo}.
+	 * @return {@code 200 OK} si se envió el código,
+	 *         {@code 404 Not Found} si no existe el correo,
+	 *         {@code 400 Bad Request} si falta el campo correo.
+	 */
+	@PostMapping("/solicitarCodigoRecuperacion")
+	@Operation(summary = "Solicitar código de recuperación",
+			description = "Envía un código de 6 dígitos al correo del cliente para recuperar contraseña")
+	public ResponseEntity<?> solicitarCodigoRecuperacion(
+			@RequestBody Map<String, String> body) {
+		String correo = body.get("correo");
+		if (correo == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(Map.of("message", "Falta campo: correo",
+							"success", false));
+		}
+		int status = clienteService.solicitarCodigoRecuperacion(correo);
+		if (status == 0) {
+			return ResponseEntity.ok(Map.of("message",
+					"Código enviado al correo registrado", "success", true));
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(Map.of("message", "Cliente no encontrado",
+							"success", false));
 		}
 	}
 
