@@ -48,6 +48,7 @@ import LayoutAdmin from "../../components/layout/LayoutAdmin";
 import { COLORES_COCOTECH } from "../../context/TemaContext";
 import { obtenerTodosPedidos } from "../../services/pedido.service";
 import { obtenerSucursales } from "../../services/sucursal.service";
+import { obtenerEmpleadoDelMes } from "../../services/venta.service";
 import { obtenerEmpleados } from "../../services/empleado.service";
 import { obtenerClientes } from "../../services/cliente.service";
 import type {
@@ -74,20 +75,49 @@ const ReportesAdmin = () => {
   const [empleados, setEmpleados] = useState<EmpleadoDTO[]>([]);
   const [clientes, setClientes] = useState<ClienteDTO[]>([]);
 
+  // Empleado del mes calculado por el stored procedure sp_empleado_del_mes
+  // que vive en MySQL. La agregación se hace en el motor, no en el cliente.
+  const [empleadoMesData, setEmpleadoMesData] = useState<{
+    nombre: string;
+    total: number;
+  } | null>(null);
+
   const cargar = async () => {
     setLoading(true);
     setError("");
     try {
-      const [peds, sucs, emps, clis] = await Promise.allSettled([
+      // Fechas del rango en formato ISO para el stored procedure.
+      // El backend espera LocalDateTime; ISO con offset funciona bien.
+      const fIniIso = new Date(inicio + "T00:00:00").toISOString();
+      const fFinIso = new Date(fin + "T23:59:59").toISOString();
+
+      const [peds, sucs, emps, clis, empMes] = await Promise.allSettled([
         obtenerTodosPedidos(),
         obtenerSucursales(),
         obtenerEmpleados(),
         obtenerClientes(),
+        obtenerEmpleadoDelMes(fIniIso, fFinIso),
       ]);
       setPedidos(peds.status === "fulfilled" ? peds.value : []);
       setSucursales(sucs.status === "fulfilled" ? sucs.value : []);
       setEmpleados(emps.status === "fulfilled" ? emps.value : []);
       setClientes(clis.status === "fulfilled" ? clis.value : []);
+
+      // El endpoint devuelve List<Object[]>: cada fila es [nombres, apellidos, totalVentas]
+      // ordenada descendentemente. La primera fila es el empleado del mes.
+      if (
+        empMes.status === "fulfilled" &&
+        Array.isArray(empMes.value) &&
+        empMes.value.length > 0
+      ) {
+        const top = empMes.value[0] as [string, string, number];
+        setEmpleadoMesData({
+          nombre: `${top[0]} ${top[1]}`,
+          total: Number(top[2]),
+        });
+      } else {
+        setEmpleadoMesData(null);
+      }
     } catch {
       setError("Error al cargar algunos reportes.");
     } finally {
@@ -115,12 +145,12 @@ const ReportesAdmin = () => {
   // ─── KPIs principales ────────────────────────────────────────────────
   const ingresoBruto = useMemo(
     () => entregadosRango.reduce((acc, p) => acc + (p.total ?? 0), 0),
-    [entregadosRango]
+    [entregadosRango],
   );
 
   const impuestos = useMemo(
     () => entregadosRango.reduce((acc, p) => acc + (p.iva ?? 0), 0),
-    [entregadosRango]
+    [entregadosRango],
   );
 
   // Empleado del mes: el que más pedidos cerró en el rango.
@@ -132,38 +162,19 @@ const ReportesAdmin = () => {
   // idEmpleadoCerrador al DTO de Pedido, se puede contar aquí. Por
   // ahora mostramos el resumen general por número de ventas.
   // Para algo concreto, dejamos esta tarjeta con un fallback útil:
-  const empleadoMes = useMemo(() => {
-    if (empleados.length === 0 || entregadosRango.length === 0) return null;
-    // Heurística temporal: el primer empleado de la sucursal con
-    // más entregados en el rango (refleja la lógica del back de
-    // fallback cuando no se especifica empleado).
-    const ventasPorSucursal = new Map<number, number>();
-    entregadosRango.forEach((p) =>
-      ventasPorSucursal.set(
-        p.idSucursalDespacho,
-        (ventasPorSucursal.get(p.idSucursalDespacho) ?? 0) + 1
-      )
-    );
-    let mejorSuc = -1;
-    let max = 0;
-    ventasPorSucursal.forEach((v, k) => {
-      if (v > max) {
-        max = v;
-        mejorSuc = k;
-      }
-    });
-    const empleado = empleados.find((e) => e.idSucursal === mejorSuc);
-    return empleado
-      ? { nombre: `${empleado.nombres} ${empleado.apellidos}`, total: max }
-      : null;
-  }, [empleados, entregadosRango]);
+  // Empleado del mes: calculado por el stored procedure sp_empleado_del_mes
+  // del motor MySQL. Recibe la fila top de la agregación ya hecha en BD.
+  const empleadoMes = empleadoMesData;
 
   // Cliente top: el que más GASTÓ en el rango.
   const clienteTop = useMemo(() => {
     if (entregadosRango.length === 0) return null;
     const acumulador = new Map<number, number>();
     entregadosRango.forEach((p) =>
-      acumulador.set(p.idCliente, (acumulador.get(p.idCliente) ?? 0) + (p.total ?? 0))
+      acumulador.set(
+        p.idCliente,
+        (acumulador.get(p.idCliente) ?? 0) + (p.total ?? 0),
+      ),
     );
     let mejorId = -1;
     let mejorTotal = 0;
@@ -188,8 +199,8 @@ const ReportesAdmin = () => {
     entregadosRango.forEach((p) =>
       acumulador.set(
         p.idSucursalDespacho,
-        (acumulador.get(p.idSucursalDespacho) ?? 0) + (p.total ?? 0)
-      )
+        (acumulador.get(p.idSucursalDespacho) ?? 0) + (p.total ?? 0),
+      ),
     );
     return sucursales.map((s) => ({
       sucursal: etiquetaSucursal(s.nombre),
@@ -220,7 +231,10 @@ const ReportesAdmin = () => {
   const topClientes = useMemo(() => {
     const acumulador = new Map<number, number>();
     entregadosRango.forEach((p) =>
-      acumulador.set(p.idCliente, (acumulador.get(p.idCliente) ?? 0) + (p.total ?? 0))
+      acumulador.set(
+        p.idCliente,
+        (acumulador.get(p.idCliente) ?? 0) + (p.total ?? 0),
+      ),
     );
     return [...acumulador.entries()]
       .map(([id, total]) => {
@@ -245,8 +259,8 @@ const ReportesAdmin = () => {
     entregadosRango.forEach((p) =>
       acumSuc.set(
         p.idSucursalDespacho,
-        (acumSuc.get(p.idSucursalDespacho) ?? 0) + (p.total ?? 0)
-      )
+        (acumSuc.get(p.idSucursalDespacho) ?? 0) + (p.total ?? 0),
+      ),
     );
     sucursales.forEach((s) => {
       const totalSuc = acumSuc.get(s.idSucursal!) ?? 0;
@@ -254,7 +268,9 @@ const ReportesAdmin = () => {
       // tomar el primer empleado de la sucursal como referencia
       const e = empleados.find((emp) => emp.idSucursal === s.idSucursal);
       r.push({
-        empleado: e ? `${e.nombres} ${e.apellidos}` : etiquetaSucursal(s.nombre),
+        empleado: e
+          ? `${e.nombres} ${e.apellidos}`
+          : etiquetaSucursal(s.nombre),
         total: Math.round(totalSuc),
       });
     });
@@ -266,7 +282,14 @@ const ReportesAdmin = () => {
       titulo="Reportes y análisis"
       subtitulo="Indicadores clave del negocio"
       acciones={
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             size="small"
             type="date"
@@ -289,7 +312,11 @@ const ReportesAdmin = () => {
             onClick={cargar}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={20} color="inherit" /> : "Actualizar"}
+            {loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Actualizar"
+            )}
           </Button>
         </Box>
       }
@@ -332,7 +359,9 @@ const ReportesAdmin = () => {
                   >
                     <FontAwesomeIcon icon={faDollarSign} />
                   </Box>
-                  <Typography sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}>
+                  <Typography
+                    sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}
+                  >
                     Ingreso bruto
                   </Typography>
                 </Box>
@@ -366,7 +395,9 @@ const ReportesAdmin = () => {
                   >
                     <FontAwesomeIcon icon={faReceipt} />
                   </Box>
-                  <Typography sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}>
+                  <Typography
+                    sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}
+                  >
                     IVA recaudado
                   </Typography>
                 </Box>
@@ -400,14 +431,18 @@ const ReportesAdmin = () => {
                   >
                     <FontAwesomeIcon icon={faMedal} />
                   </Box>
-                  <Typography sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}>
+                  <Typography
+                    sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}
+                  >
                     Empleado destacado
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
                   {empleadoMes?.nombre ?? "—"}
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: "var(--coco-text-muted)" }}>
+                <Typography
+                  sx={{ fontSize: 11, color: "var(--coco-text-muted)" }}
+                >
                   {empleadoMes ? `${empleadoMes.total} ventas` : ""}
                 </Typography>
               </Box>
@@ -437,14 +472,18 @@ const ReportesAdmin = () => {
                   >
                     <FontAwesomeIcon icon={faCrown} />
                   </Box>
-                  <Typography sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}>
+                  <Typography
+                    sx={{ fontSize: 12, color: "var(--coco-text-secondary)" }}
+                  >
                     Cliente top
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
                   {clienteTop?.nombre ?? "—"}
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: "var(--coco-text-muted)" }}>
+                <Typography
+                  sx={{ fontSize: 11, color: "var(--coco-text-muted)" }}
+                >
                   {clienteTop
                     ? `$${clienteTop.total.toLocaleString("es-CO")} gastados`
                     : ""}
@@ -485,7 +524,9 @@ const ReportesAdmin = () => {
                           border: "1px solid var(--coco-border)",
                           borderRadius: 8,
                         }}
-                        formatter={(v: number) => `$${v.toLocaleString("es-CO")}`}
+                        formatter={(v: number) =>
+                          `$${v.toLocaleString("es-CO")}`
+                        }
                       />
                       <Bar
                         dataKey="ingreso"
@@ -568,7 +609,9 @@ const ReportesAdmin = () => {
                     Sin datos en el rango.
                   </Typography>
                 ) : (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     {topClientes.map((c, i) => (
                       <Box
                         key={i}
@@ -590,7 +633,8 @@ const ReportesAdmin = () => {
                               i === 0
                                 ? COLORES_COCOTECH.amber
                                 : "var(--coco-border-strong)",
-                            color: i === 0 ? "#000" : "var(--coco-text-secondary)",
+                            color:
+                              i === 0 ? "#000" : "var(--coco-text-secondary)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -654,7 +698,9 @@ const ReportesAdmin = () => {
                           border: "1px solid var(--coco-border)",
                           borderRadius: 8,
                         }}
-                        formatter={(v: number) => `$${v.toLocaleString("es-CO")}`}
+                        formatter={(v: number) =>
+                          `$${v.toLocaleString("es-CO")}`
+                        }
                       />
                       <Bar
                         dataKey="total"
